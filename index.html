@@ -9,16 +9,40 @@
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
   <style>
+    /* Dark Mode Theme Variables (Default) */
     :root {
       --bg-color: #0d0f14;
       --card-bg: #161922;
       --card-border: #262b3a;
+      --card-hover-border: #3b4259;
       --text-main: #f0f2f5;
       --text-muted: #94a3b8;
+      --input-bg: #1e2230;
+      --input-border: #262b3a;
+      --stat-bg: #222736;
+      --stat-color: #38bdf8;
       --accent-blue: #3b82f6;
       --accent-danger: #ef4444;
       --buff-color: #10b981;
       --bane-color: #f43f5e;
+      --domain-tag-bg: rgba(168, 85, 247, 0.15);
+      --domain-tag-text: #d8b4fe;
+    }
+
+    /* Light Mode Theme Variables */
+    body.light-mode {
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --card-hover-border: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --input-bg: #ffffff;
+      --input-border: #cbd5e1;
+      --stat-bg: #e2e8f0;
+      --stat-color: #0284c7;
+      --domain-tag-bg: rgba(168, 85, 247, 0.12);
+      --domain-tag-text: #7e22ce;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,6 +53,7 @@
       color: var(--text-main); 
       padding: 16px;
       line-height: 1.5;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     .container {
@@ -79,7 +104,7 @@
     }
     .btn:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn-danger { background-color: var(--accent-danger); }
-    .btn-secondary { background-color: #334155; color: #cbd5e1; }
+    .btn-secondary { background-color: #334155; color: #f8fafc; }
 
     /* Admin Management Panel */
     .admin-controls { 
@@ -89,10 +114,10 @@
       border-radius: 12px; 
       margin-bottom: 24px; 
       border: 1px solid var(--card-border); 
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
     body.admin-mode .admin-controls { display: block; }
-    .admin-controls h3 { margin-bottom: 8px; font-size: 1.1rem; color: #f1f5f9; }
+    .admin-controls h3 { margin-bottom: 8px; font-size: 1.1rem; color: var(--text-main); }
     .admin-controls p { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 14px; }
     
     .upload-box {
@@ -121,15 +146,15 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      background: #1e2230;
+      background: var(--input-bg);
       padding: 6px 12px;
       border-radius: 8px;
-      border: 1px solid var(--card-border);
+      border: 1px solid var(--input-border);
     }
     .color-picker-item label {
       font-size: 0.85rem;
       font-weight: 600;
-      color: #cbd5e1;
+      color: var(--text-main);
       flex-grow: 1;
     }
     .color-picker-item input[type="color"] {
@@ -154,9 +179,9 @@
 
     input[type="text"], input[type="file"], select { 
       padding: 12px 16px; 
-      background: #1e2230; 
-      border: 1px solid var(--card-border); 
-      color: white; 
+      background: var(--input-bg); 
+      border: 1px solid var(--input-border); 
+      color: var(--text-main); 
       border-radius: 8px; 
       font-size: 0.95rem;
       outline: none;
@@ -184,13 +209,14 @@
       display: flex; 
       flex-direction: column; 
       justify-content: space-between; 
-      transition: transform 0.2s, border-color 0.2s;
+      transition: transform 0.2s, border-color 0.2s, background-color 0.3s;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     .card:hover { 
       transform: translateY(-3px); 
-      border-color: #3b4259;
+      border-color: var(--card-hover-border);
     }
 
     .card-header-type {
@@ -215,17 +241,17 @@
     .card-number {
       font-size: 0.75rem;
       font-weight: 700;
-      color: #94a3b8;
-      background: #1e2230;
+      color: var(--text-muted);
+      background: var(--input-bg);
       padding: 3px 8px;
       border-radius: 6px;
-      border: 1px solid var(--card-border);
+      border: 1px solid var(--input-border);
     }
 
     .card h3 { 
       font-size: 1.15rem;
       font-weight: 700;
-      color: #f8fafc; 
+      color: var(--text-main); 
       margin-bottom: 8px;
     }
 
@@ -237,10 +263,10 @@
       font-size: 0.85rem;
     }
     .stat-pill {
-      background: #222736;
+      background: var(--stat-bg);
       padding: 4px 8px;
       border-radius: 6px;
-      color: #38bdf8;
+      color: var(--stat-color);
       font-weight: 600;
     }
 
@@ -251,16 +277,17 @@
       gap: 6px;
       margin: 10px 0;
       padding: 4px 10px;
-      background: rgba(168, 85, 247, 0.12);
+      background: var(--domain-tag-bg);
       border-radius: 6px;
       font-size: 0.8rem;
       font-weight: 700;
-      color: #d8b4fe;
+      color: var(--domain-tag-text);
     }
 
     .card-ability { 
       font-size: 0.9rem; 
-      color: #cbd5e1; 
+      color: var(--text-main); 
+      opacity: 0.9;
       line-height: 1.5; 
       margin-top: 6px;
     }
@@ -276,6 +303,7 @@
     <div class="header">
       <h1 class="title">Prime Ego Gallery</h1>
       <div class="btn-group">
+        <button id="themeToggleBtn" class="btn btn-secondary">☀️ Light Mode</button>
         <button id="adminToggleBtn" class="btn btn-secondary">✏️ Admin Login</button>
         <button id="lockAdminBtn" class="btn btn-danger" style="display:none;">🔒 Logout</button>
       </div>
@@ -351,6 +379,7 @@
     const db = getDatabase(app);
     const auth = getAuth(app);
 
+    const themeToggleBtn = document.getElementById("themeToggleBtn");
     const adminToggleBtn = document.getElementById("adminToggleBtn");
     const lockAdminBtn = document.getElementById("lockAdminBtn");
     const excelFileInput = document.getElementById("excelFileInput");
@@ -366,7 +395,23 @@
     let allCards = [];
     let typeColors = {};
 
-    // Default Card Type Colors
+    // --- Theme (Light / Dark Mode) Handling ---
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "light") {
+      document.body.classList.add("light-mode");
+      themeToggleBtn.innerText = "🌙 Dark Mode";
+    } else {
+      themeToggleBtn.innerText = "☀️ Light Mode";
+    }
+
+    themeToggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("light-mode");
+      const isLight = document.body.classList.contains("light-mode");
+      localStorage.setItem("theme", isLight ? "light" : "dark");
+      themeToggleBtn.innerText = isLight ? "🌙 Dark Mode" : "☀️ Light Mode";
+    });
+
+    // Default Fallback Card Type Colors
     const defaultColors = {
       "Domain": "#a855f7",
       "Item": "#06b6d4",
@@ -458,15 +503,18 @@
               cardType = "Domain";
             }
 
+            // Flexible lookup for Collection Number column variations
+            const rawColNum = row.Collection_Number || row["Collection Number"] || row.collection_number || row["Collection number"] || row.COLLECTION_NUMBER || "";
+
             return {
               id: row.ID ? String(row.ID) : `card_${idx}`,
-              name: String(row.Name || "Untitled Card"),
+              name: String(row.Name || row.NAME || "Untitled Card"),
               cost: cost,
               hp: hp,
               power: power,
               type: cardType,
               ability: abilityText,
-              collectionNumber: String(row.Collection_Number || row["Collection Number"] || "")
+              collectionNumber: String(rawColNum).trim()
             };
           });
 
