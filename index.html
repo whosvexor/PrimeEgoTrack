@@ -472,6 +472,18 @@
       return isNaN(parsed) ? 0 : parsed;
     };
 
+    // Helper: Parse Collection Number into Card Number and Set Total
+    function parseCollectionNum(str) {
+      if (!str || typeof str !== 'string' || !str.includes('/')) {
+        return { num: 999999, total: 999999 };
+      }
+      const parts = str.split('/');
+      return {
+        num: parseInt(parts[0].trim(), 10) || 999999,
+        total: parseInt(parts[1].trim(), 10) || 999999
+      };
+    }
+
     // Bulk Excel Import Logic
     importBtn.addEventListener("click", () => {
       const file = excelFileInput.files[0];
@@ -616,10 +628,18 @@
       // 2. Sort Cards
       filtered.sort((a, b) => {
         switch (selectedSort) {
-          case "collection_asc":
-            return (a.collectionNumber || "").localeCompare(b.collectionNumber || "", undefined, { numeric: true, sensitivity: 'base' });
-          case "collection_desc":
-            return (b.collectionNumber || "").localeCompare(a.collectionNumber || "", undefined, { numeric: true, sensitivity: 'base' });
+          case "collection_asc": {
+            const colA = parseCollectionNum(a.collectionNumber);
+            const colB = parseCollectionNum(b.collectionNumber);
+            if (colA.total !== colB.total) return colA.total - colB.total; // Set 1 (/72) before Set 2 (/108)
+            return colA.num - colB.num;
+          }
+          case "collection_desc": {
+            const colA = parseCollectionNum(a.collectionNumber);
+            const colB = parseCollectionNum(b.collectionNumber);
+            if (colA.total !== colB.total) return colA.total - colB.total; // Set 1 (/72) before Set 2 (/108)
+            return colB.num - colA.num;
+          }
           case "name_asc":
             return a.name.localeCompare(b.name);
           case "name_desc":
