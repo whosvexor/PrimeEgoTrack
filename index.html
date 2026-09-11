@@ -80,15 +80,15 @@
       onAuthStateChanged 
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // Firebase Configuration
+    // Your Exact Firebase Configuration
     const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
+      apiKey: "AIzaSyBhGXBgEcVDihD3od5XGJB7mmBg7_Kxwt4",
       authDomain: "pego-a3b20.firebaseapp.com",
-      databaseURL: "https://pego-a3b20-default-rtdb.firebaseio.com",
+      databaseURL: "https://pego-a3b20-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "pego-a3b20",
-      storageBucket: "pego-a3b20.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      storageBucket: "pego-a3b20.firebasestorage.app",
+      messagingSenderId: "895990371588",
+      appId: "1:895990371588:web:319ca9c8bbfc46f8db2c51"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -123,7 +123,7 @@
       }
     });
 
-    // Admin Login Click
+    // Admin Login Handler
     adminToggleBtn.addEventListener("click", async () => {
       if (isAdmin) return;
       const email = prompt("Enter Admin Email:");
@@ -139,7 +139,7 @@
       }
     });
 
-    // Logout Click
+    // Logout Handler
     lockAdminBtn.addEventListener("click", async () => {
       try {
         await signOut(auth);
@@ -190,7 +190,7 @@
             };
           });
 
-          // Wipe & Replace DB Nodes
+          // Replace Realtime Database node
           await set(ref(db, "game_data"), processedCards);
           alert(`Successfully replaced database with ${processedCards.length} cards!`);
           excelFileInput.value = "";
