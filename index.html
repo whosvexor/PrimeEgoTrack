@@ -17,8 +17,6 @@
       --text-muted: #94a3b8;
       --accent-blue: #3b82f6;
       --accent-danger: #ef4444;
-      --domain-color: #a855f7;
-      --item-color: #06b6d4;
       --buff-color: #10b981;
       --bane-color: #f43f5e;
     }
@@ -101,12 +99,49 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      margin-bottom: 20px;
     }
     @media (min-width: 640px) {
       .upload-box { flex-direction: row; align-items: center; }
     }
 
-    /* Filter & Search Bar */
+    /* Color Customizer Section */
+    .color-customizer {
+      border-top: 1px solid var(--card-border);
+      padding-top: 16px;
+      margin-top: 16px;
+    }
+    .color-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 12px 0 16px 0;
+    }
+    .color-picker-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e2230;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+    .color-picker-item label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      flex-grow: 1;
+    }
+    .color-picker-item input[type="color"] {
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    /* Filter & Search Controls Bar */
     .filter-bar { 
       display: flex; 
       flex-direction: column; 
@@ -165,32 +200,26 @@
       margin-bottom: 10px;
     }
 
-    /* Card Type Badges */
+    /* Dynamic Card Type Badges */
     .card-type { 
       font-size: 0.75em; 
       font-weight: 700;
       text-transform: uppercase; 
       letter-spacing: 0.05em;
-      background: #2a2f42; 
-      color: #94a3b8;
       padding: 4px 10px; 
       border-radius: 6px; 
-    }
-    .card-type.domain {
-      background: rgba(168, 85, 247, 0.15);
-      color: #c084fc;
-      border: 1px solid rgba(168, 85, 247, 0.4);
-    }
-    .card-type.item {
-      background: rgba(6, 182, 212, 0.15);
-      color: #22d3ee;
-      border: 1px solid rgba(6, 182, 212, 0.4);
+      transition: all 0.2s ease;
     }
 
-    /* Card Glow Effects */
-    .card.domain-card {
-      border-left: 4px solid var(--domain-color);
-      background: linear-gradient(180deg, rgba(168, 85, 247, 0.04) 0%, var(--card-bg) 100%);
+    /* Collection Number Badge */
+    .card-number {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #94a3b8;
+      background: #1e2230;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
     }
 
     .card h3 { 
@@ -200,7 +229,7 @@
       margin-bottom: 8px;
     }
 
-    /* Stats Grid (hidden for Domain Cards) */
+    /* Stats Grid */
     .card-stats { 
       display: flex;
       gap: 8px;
@@ -215,7 +244,7 @@
       font-weight: 600;
     }
 
-    /* Domain Cards Special Tag Bar */
+    /* Domain Special Tag Bar */
     .domain-tag-bar {
       display: inline-flex;
       align-items: center;
@@ -237,14 +266,8 @@
     }
 
     /* Buff & Bane Text Styling */
-    .buff-tag {
-      color: var(--buff-color);
-      font-weight: 700;
-    }
-    .bane-tag {
-      color: var(--bane-color);
-      font-weight: 700;
-    }
+    .buff-tag { color: var(--buff-color); font-weight: 700; }
+    .bane-tag { color: var(--bane-color); font-weight: 700; }
   </style>
 </head>
 <body>
@@ -258,21 +281,43 @@
       </div>
     </div>
 
-    <!-- Admin Controls Panel -->
+    <!-- Admin Management Panel -->
     <div id="adminPanel" class="admin-controls">
-      <h3>Admin Management</h3>
+      <h3>Database Bulk Import</h3>
       <p>Upload an Excel file (<code>.xlsx</code>) to replace all cards in the database:</p>
       <div class="upload-box">
         <input type="file" id="excelFileInput" accept=".xlsx, .xls" />
         <button id="importBtn" class="btn">Upload & Replace Database</button>
       </div>
+
+      <!-- Card Type Color Customizer -->
+      <div class="color-customizer">
+        <h3>Card Type Colors Customizer</h3>
+        <p>Pick custom badge colors for each card type:</p>
+        <div id="colorPickerGrid" class="color-picker-grid"></div>
+        <button id="saveColorsBtn" class="btn">Save Type Colors</button>
+      </div>
     </div>
 
-    <!-- Filter & Search Controls -->
+    <!-- Filter, Search & Sorting Bar -->
     <div class="filter-bar">
       <input type="text" id="searchInput" placeholder="Search by name or ability text..." />
+      
+      <!-- Type Filter -->
       <select id="typeFilter">
         <option value="All">All Types</option>
+      </select>
+
+      <!-- Sorting Selector -->
+      <select id="sortBy">
+        <option value="collection_asc">Collection # (Ascending)</option>
+        <option value="collection_desc">Collection # (Descending)</option>
+        <option value="name_asc">Name (A - Z)</option>
+        <option value="name_desc">Name (Z - A)</option>
+        <option value="cost_asc">Cost (Low to High)</option>
+        <option value="cost_desc">Cost (High to Low)</option>
+        <option value="power_desc">Power (High to Low)</option>
+        <option value="hp_desc">HP (High to Low)</option>
       </select>
     </div>
 
@@ -312,10 +357,27 @@
     const importBtn = document.getElementById("importBtn");
     const searchInput = document.getElementById("searchInput");
     const typeFilter = document.getElementById("typeFilter");
+    const sortBy = document.getElementById("sortBy");
     const galleryGrid = document.getElementById("galleryGrid");
+    const colorPickerGrid = document.getElementById("colorPickerGrid");
+    const saveColorsBtn = document.getElementById("saveColorsBtn");
 
     let isAdmin = false;
     let allCards = [];
+    let typeColors = {};
+
+    // Default Card Type Colors
+    const defaultColors = {
+      "Domain": "#a855f7",
+      "Item": "#06b6d4",
+      "Watcher": "#3b82f6",
+      "Patron": "#10b981",
+      "Designer": "#f59e0b",
+      "Creator": "#ec4899",
+      "Discord": "#8b5cf6",
+      "Legacy": "#64748b",
+      "Champion": "#eab308"
+    };
 
     // Monitor Firebase Auth State
     onAuthStateChanged(auth, (user) => {
@@ -324,6 +386,7 @@
         document.body.classList.add("admin-mode");
         adminToggleBtn.innerText = "🔓 Logged In (Admin)";
         lockAdminBtn.style.display = "inline-block";
+        renderColorPickers();
       } else {
         isAdmin = false;
         document.body.classList.remove("admin-mode");
@@ -358,7 +421,7 @@
       }
     });
 
-    // Helper: Safe numeric parsing to prevent NaN errors
+    // Helper: Safe numeric parsing
     const safeNum = (val) => {
       const parsed = Number(val);
       return isNaN(parsed) ? 0 : parsed;
@@ -402,7 +465,8 @@
               hp: hp,
               power: power,
               type: cardType,
-              ability: abilityText
+              ability: abilityText,
+              collectionNumber: String(row.Collection_Number || row["Collection Number"] || "")
             };
           });
 
@@ -416,13 +480,52 @@
       reader.readAsArrayBuffer(file);
     });
 
-    // Realtime Database Sync
+    // Realtime Database Sync - Cards Data
     onValue(ref(db, "game_data"), (snapshot) => {
       const data = snapshot.val();
       allCards = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
       updateTypeFilterOptions();
+      renderColorPickers();
       renderGallery();
     });
+
+    // Realtime Database Sync - Custom Type Colors
+    onValue(ref(db, "type_colors"), (snapshot) => {
+      typeColors = snapshot.val() || {};
+      renderColorPickers();
+      renderGallery();
+    });
+
+    // Save Custom Type Colors
+    saveColorsBtn.addEventListener("click", async () => {
+      const updatedColors = {};
+      document.querySelectorAll(".color-picker-input").forEach(input => {
+        updatedColors[input.dataset.type] = input.value;
+      });
+
+      try {
+        await set(ref(db, "type_colors"), updatedColors);
+        alert("Card type colors saved successfully!");
+      } catch (err) {
+        alert("Failed to save colors: " + err.message);
+      }
+    });
+
+    // Render Admin Color Pickers
+    function renderColorPickers() {
+      if (!isAdmin) return;
+      const types = [...new Set(allCards.map(c => c.type).filter(Boolean))].sort();
+
+      colorPickerGrid.innerHTML = types.map(t => {
+        const color = typeColors[t] || defaultColors[t] || "#3b82f6";
+        return `
+          <div class="color-picker-item">
+            <label>${t}</label>
+            <input type="color" class="color-picker-input" data-type="${t}" value="${color}">
+          </div>
+        `;
+      }).join("");
+    }
 
     // Dynamic Filter Dropdown Options
     function updateTypeFilterOptions() {
@@ -444,17 +547,49 @@
         .replace(/Bane:/gi, '<br><span class="bane-tag">Bane:</span>');
     }
 
+    // Get Color for Card Type
+    function getTypeColor(type) {
+      return typeColors[type] || defaultColors[type] || "#3b82f6";
+    }
+
     // Render Cards Gallery
     function renderGallery() {
       const query = searchInput.value.toLowerCase();
       const selectedType = typeFilter.value;
+      const selectedSort = sortBy.value;
 
-      const filtered = allCards.filter(card => {
+      // 1. Filter Cards
+      let filtered = allCards.filter(card => {
         const matchesSearch = card.name.toLowerCase().includes(query) || card.ability.toLowerCase().includes(query);
         const matchesType = selectedType === "All" || card.type === selectedType;
         return matchesSearch && matchesType;
       });
 
+      // 2. Sort Cards
+      filtered.sort((a, b) => {
+        switch (selectedSort) {
+          case "collection_asc":
+            return (a.collectionNumber || "").localeCompare(b.collectionNumber || "", undefined, { numeric: true, sensitivity: 'base' });
+          case "collection_desc":
+            return (b.collectionNumber || "").localeCompare(a.collectionNumber || "", undefined, { numeric: true, sensitivity: 'base' });
+          case "name_asc":
+            return a.name.localeCompare(b.name);
+          case "name_desc":
+            return b.name.localeCompare(a.name);
+          case "cost_asc":
+            return a.cost - b.cost;
+          case "cost_desc":
+            return b.cost - a.cost;
+          case "power_desc":
+            return b.power - a.power;
+          case "hp_desc":
+            return b.hp - a.hp;
+          default:
+            return 0;
+        }
+      });
+
+      // 3. Render Output
       if (filtered.length === 0) {
         galleryGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No cards found.</p>`;
         return;
@@ -462,16 +597,17 @@
 
       galleryGrid.innerHTML = filtered.map(card => {
         const isDomain = card.type === "Domain";
-        const isItem = card.type === "Item";
+        const typeColor = getTypeColor(card.type);
 
-        const badgeClass = isDomain ? "domain" : (isItem ? "item" : "");
-        const cardClass = isDomain ? "card domain-card" : "card";
+        const badgeStyle = `background: ${typeColor}22; color: ${typeColor}; border: 1px solid ${typeColor}66;`;
+        const cardStyle = isDomain ? `border-left: 4px solid ${typeColor};` : '';
 
         return `
-          <div class="${cardClass}">
+          <div class="card" style="${cardStyle}">
             <div>
               <div class="card-header-type">
-                <span class="card-type ${badgeClass}">${card.type}</span>
+                <span class="card-type" style="${badgeStyle}">${card.type}</span>
+                ${card.collectionNumber ? `<span class="card-number">#${card.collectionNumber}</span>` : ''}
               </div>
               <h3>${card.name}</h3>
 
@@ -494,6 +630,7 @@
 
     searchInput.addEventListener("input", renderGallery);
     typeFilter.addEventListener("change", renderGallery);
+    sortBy.addEventListener("change", renderGallery);
   </script>
 </body>
 </html>
