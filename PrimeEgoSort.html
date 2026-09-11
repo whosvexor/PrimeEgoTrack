@@ -1,789 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Prime Ego - Card Gallery</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prime Ego Card Gallery</title>
   
-  <!-- SheetJS for Bulk Excel Upload -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- SheetJS for Excel Parsing -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
   <style>
-    :root {
-      --bg: #0b0f19;
-      --card-bg: #161e2e;
-      --card-hover: #1f2a3e;
-      --border: #2a364f;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-hover: #0284c7;
-      --danger: #ef4444;
-      --gold: #f59e0b;
-      --success: #22c55e;
-      --purple: #a855f7;
-      --modal-overlay: rgba(0, 0, 0, 0.8);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text-main);
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    header {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand h1 { font-size: 1.3rem; font-weight: 700; color: var(--text-main); }
-    .brand span { font-size: 0.8rem; background: var(--border); color: var(--accent); padding: 3px 8px; border-radius: 6px; }
-
-    .header-actions { display: flex; gap: 10px; align-items: center; }
-
-    button {
-      background: var(--accent);
-      color: #0f172a;
-      font-weight: 600;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.88rem;
-      transition: all 0.2s;
-    }
-
-    button:hover { background: var(--accent-hover); color: #fff; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
-    .btn-outline:hover { background: var(--border); color: var(--text-main); }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-danger:hover { background: #dc2626; }
-    .btn-success { background: var(--success); color: #0f172a; }
-    .btn-success:hover { background: #16a34a; color: #fff; }
-
-    .admin-panel {
-      display: none;
-      background: var(--card-bg);
-      border: 1px solid var(--gold);
-      border-radius: 14px;
-      padding: 20px;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .admin-panel.active { display: flex; }
-
-    .admin-title {
-      font-size: 0.95rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--gold);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .admin-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    @media (max-width: 768px) {
-      .admin-grid { grid-template-columns: 1fr; }
-    }
-
-    .admin-section {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .admin-section h3 {
-      font-size: 0.9rem;
-      color: var(--accent);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-    }
-
-    .file-upload-box {
-      border: 2px dashed var(--border);
-      padding: 24px;
-      border-radius: 10px;
-      text-align: center;
-      background: rgba(255, 255, 255, 0.02);
-      cursor: pointer;
-    }
-
-    .file-upload-box input { display: none; }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 10px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .form-group label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .controls-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    input, select, textarea {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      outline: none;
-    }
-
-    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-    .search-input { flex: 2; min-width: 180px; }
-    .filter-select { flex: 1; min-width: 130px; }
-
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 16px;
-    }
-
-    .game-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 12px;
-      cursor: pointer;
-      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .game-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--accent);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-    .card-name { font-size: 1.05rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #121212; color: #e0e0e0; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+    .btn { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn:hover { background-color: #0056b3; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-danger:hover { background-color: #a71d2a; }
+    .btn-secondary { background-color: #495057; }
     
-    .card-type { font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: rgba(56, 189, 248, 0.15); color: var(--accent); font-weight: 600; text-transform: uppercase; white-space: nowrap; }
-    .type-domain { background: rgba(168, 85, 247, 0.2); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.4); }
-    .type-item { background: rgba(245, 158, 11, 0.2); color: var(--gold); border: 1px solid rgba(245, 158, 11, 0.4); }
+    /* Admin Panel (Hidden by default) */
+    .admin-controls { display: none; background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #333; }
+    body.admin-mode .admin-controls { display: block; }
+    
+    /* Controls Area */
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    input, select { padding: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 4px; }
+    input[type="text"] { flex-grow: 1; }
 
-    .card-stats { display: flex; gap: 8px; }
-    .stat-badge { font-size: 0.8rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border); }
-    .stat-cost { color: var(--gold); }
-    .stat-hp { color: #22c55e; }
-    .stat-power { color: #f43f5e; }
-
-    .card-ability-preview {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      line-height: 1.4;
-    }
-
-    .card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      padding-top: 8px;
-    }
-
-    .tag-badge { background: rgba(255, 255, 255, 0.06); padding: 2px 6px; border-radius: 4px; }
-    .set-badge { font-weight: 600; color: var(--accent); }
-
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--modal-overlay);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 1000;
-      backdrop-filter: blur(4px);
-    }
-
-    .modal-overlay.active { display: flex; }
-
-    .modal-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      max-width: 480px;
-      width: 100%;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      position: relative;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-    }
-
-    .modal-close {
-      position: absolute;
-      top: 16px; right: 16px;
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-
-    .modal-ability-box {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 14px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      color: var(--text-main);
-    }
-
-    .delete-card-btn { margin-top: 8px; width: 100%; display: none; }
-    body.admin-mode .delete-card-btn { display: block; }
+    /* Cards Grid */
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+    .card { background: #1e1e1e; padding: 15px; border-radius: 8px; border: 1px solid #333; display: flex; flex-direction: column; justify-content: space-between; }
+    .card h3 { margin-top: 0; color: #ffca28; }
+    .card-type { font-size: 0.85em; text-transform: uppercase; background: #333; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 8px; }
+    .card-stats { font-weight: bold; margin: 10px 0; color: #81d4fa; }
+    .card-ability { font-size: 0.9em; color: #ccc; line-height: 1.4; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <header>
-      <div class="brand">
-        <h1>Prime Ego Cards</h1>
-        <span id="cardCount">0 Cards</span>
-      </div>
-      <div class="header-actions">
-        <button id="adminToggleBtn" class="btn-outline">✏️ Edit/Add</button>
-      </div>
-    </header>
-
-    <div id="adminPanel" class="admin-panel">
-      <div class="admin-title">
-        <span>⚡ Edit / Add Controls</span>
-        <button id="lockAdminBtn" class="btn-outline" style="padding: 4px 10px; font-size: 0.75rem;">Lock Editing</button>
-      </div>
-
-      <div class="admin-grid">
-        <div class="admin-section">
-          <h3>📂 Replace Collection via Excel</h3>
-          <div class="file-upload-box" id="uploadDropZone">
-            <p style="font-size: 0.9rem; font-weight: 600; margin-bottom: 6px;">Import `Who is in Prime Ego.xlsx`</p>
-            <p style="font-size: 0.78rem; color: var(--danger); font-weight: 600;">⚠️ Will replace all current cards with new Excel data</p>
-            <input type="file" id="excelInput" accept=".xlsx, .xls, .csv" />
-          </div>
-          <button id="clearDbBtn" class="btn-danger" style="margin-top: auto;">⚠️ Clear Entire Database</button>
-        </div>
-
-        <div class="admin-section">
-          <h3>➕ Add Single Card Manually</h3>
-          <form id="addCardForm" style="display: flex; flex-direction: column; gap: 10px;">
-            <div class="form-grid">
-              <div class="form-group" style="grid-column: span 2;">
-                <label>Card Name*</label>
-                <input type="text" id="addName" required placeholder="e.g. Ancient Shrine" />
-              </div>
-              <div class="form-group">
-                <label>Type (Optional - Auto-detects Domain)</label>
-                <input type="text" id="addType" placeholder="e.g. Item, Designer, Domain" />
-              </div>
-              <div class="form-group">
-                <label>Collection #*</label>
-                <input type="text" id="addCollection" required placeholder="e.g. 01/72, 001/108, 001/150" />
-              </div>
-            </div>
-
-            <div class="form-grid">
-              <div class="form-group"><label>Cost</label><input type="number" id="addCost" value="0" /></div>
-              <div class="form-group"><label>HP</label><input type="number" id="addHp" value="0" /></div>
-              <div class="form-group"><label>Power</label><input type="number" id="addPower" value="0" /></div>
-              <div class="form-group"><label>TAG</label><input type="text" id="addTag" placeholder="e.g. Relic" /></div>
-            </div>
-
-            <div class="form-grid">
-              <div class="form-group"><label>Attribute 1</label><input type="text" id="addAttr1" placeholder="e.g. Swift" /></div>
-              <div class="form-group"><label>Attribute 2</label><input type="text" id="addAttr2" placeholder="e.g. Range" /></div>
-            </div>
-
-            <div class="form-group">
-              <label>Ability Description (Include 'buff' or 'bane' for Domain auto-classification)</label>
-              <textarea id="addAbility" rows="2" placeholder="e.g. Gives +2 buff to attack..."></textarea>
-            </div>
-
-            <button type="submit" class="btn-success">Save Single Card</button>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <section class="controls-card">
-      <input type="text" id="searchInput" class="search-input" placeholder="Search cards by name or ability..." />
-      
-      <select id="setFilter" class="filter-select">
-        <option value="all">All Sets</option>
-      </select>
-
-      <select id="typeFilter" class="filter-select">
-        <option value="all">All Types</option>
-      </select>
-
-      <select id="sortSelect" class="filter-select">
-        <option value="number">Collection # (Set Order)</option>
-        <option value="set">Group by Set</option>
-        <option value="name">Name (A-Z)</option>
-        <option value="cost">Cost (High to Low)</option>
-        <option value="power">Power (High to Low)</option>
-        <option value="hp">HP (High to Low)</option>
-      </select>
-    </section>
-
-    <main id="cardGrid" class="card-grid">
-      <div style="color: var(--text-muted); grid-column: 1/-1;">Loading card collection...</div>
-    </main>
-  </div>
-
-  <div id="cardModal" class="modal-overlay">
-    <div class="modal-card">
-      <button id="closeModal" class="modal-close">✕</button>
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span id="modalType" class="card-type">TYPE</span>
-        <span id="modalNumber" style="font-size: 0.8rem; color: var(--accent); font-weight: 700;">#00/00</span>
-      </div>
-      <h2 id="modalName" style="font-size: 1.4rem;">Card Name</h2>
-      
-      <div class="card-stats">
-        <div class="stat-badge stat-cost">Cost: <span id="modalCost">0</span></div>
-        <div class="stat-badge stat-hp">HP: <span id="modalHp">0</span></div>
-        <div class="stat-badge stat-power">Power: <span id="modalPower">0</span></div>
-      </div>
-
-      <div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; font-weight: 700;">Ability / Effect</div>
-        <div id="modalAbility" class="modal-ability-box">No ability text.</div>
-      </div>
-
-      <div style="display: flex; gap: 10px; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;">
-        <div><strong>Set:</strong> <span id="modalSet">Set 1</span></div>
-        <div><strong>TAG:</strong> <span id="modalTag">None</span></div>
-        <div><strong>Attributes:</strong> <span id="modalAttrs">None</span></div>
-      </div>
-
-      <button id="modalDeleteBtn" class="btn-danger delete-card-btn">Delete This Card</button>
+  <div class="header">
+    <h1>Prime Ego Card Gallery</h1>
+    <div>
+      <button id="adminToggleBtn" class="btn btn-secondary">✏️ Admin Login</button>
+      <button id="lockAdminBtn" class="btn btn-danger" style="display:none;">🔒 Logout</button>
     </div>
   </div>
 
+  <!-- Admin Controls Panel -->
+  <div id="adminPanel" class="admin-controls">
+    <h3>Admin Management</h3>
+    <p>Upload an Excel file (<code>.xlsx</code>) to wipe existing cards and perform a clean bulk import:</p>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <input type="file" id="excelFileInput" accept=".xlsx, .xls" />
+      <button id="importBtn" class="btn">Upload & Replace Database</button>
+    </div>
+  </div>
+
+  <!-- Filter & Search Controls -->
+  <div class="filter-bar">
+    <input type="text" id="searchInput" placeholder="Search cards by name or ability text..." />
+    <select id="typeFilter">
+      <option value="All">All Types</option>
+      <option value="Domain">Domain</option>
+      <option value="Item">Item</option>
+    </select>
+  </div>
+
+  <!-- Cards Output Grid -->
+  <div id="galleryGrid" class="gallery"></div>
+
+  <!-- Firebase Integration Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      signOut, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    const EDIT_PASSCODE = "adminprime26";
-
+    // Firebase Configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyBhGXBgEcVDihD3od5XGJB7mmBg7_Kxwt4",
+      apiKey: "YOUR_FIREBASE_API_KEY",
       authDomain: "pego-a3b20.firebaseapp.com",
-      databaseURL: "https://pego-a3b20-default-rtdb.asia-southeast1.firebasedatabase.app",
+      databaseURL: "https://pego-a3b20-default-rtdb.firebaseio.com",
       projectId: "pego-a3b20",
-      storageBucket: "pego-a3b20.firebasestorage.app",
-      messagingSenderId: "895990371588",
-      appId: "1:895990371588:web:319ca9c8bbfc46f8db2c51"
+      storageBucket: "pego-a3b20.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
 
-    let rawCardsData = {};
-    let activeCardKey = null;
-    let isAdmin = false;
-
-    const cardGrid = document.getElementById("cardGrid");
-    const cardCount = document.getElementById("cardCount");
-    const searchInput = document.getElementById("searchInput");
-    const setFilter = document.getElementById("setFilter");
-    const typeFilter = document.getElementById("typeFilter");
-    const sortSelect = document.getElementById("sortSelect");
+    // DOM Elements
     const adminToggleBtn = document.getElementById("adminToggleBtn");
-    const adminPanel = document.getElementById("adminPanel");
     const lockAdminBtn = document.getElementById("lockAdminBtn");
-    const excelInput = document.getElementById("excelInput");
-    const uploadDropZone = document.getElementById("uploadDropZone");
-    const clearDbBtn = document.getElementById("clearDbBtn");
-    const addCardForm = document.getElementById("addCardForm");
+    const adminPanel = document.getElementById("adminPanel");
+    const excelFileInput = document.getElementById("excelFileInput");
+    const importBtn = document.getElementById("importBtn");
+    const searchInput = document.getElementById("searchInput");
+    const typeFilter = document.getElementById("typeFilter");
+    const galleryGrid = document.getElementById("galleryGrid");
 
-    const cardModal = document.getElementById("cardModal");
-    const closeModal = document.getElementById("closeModal");
-    const modalName = document.getElementById("modalName");
-    const modalType = document.getElementById("modalType");
-    const modalNumber = document.getElementById("modalNumber");
-    const modalCost = document.getElementById("modalCost");
-    const modalHp = document.getElementById("modalHp");
-    const modalPower = document.getElementById("modalPower");
-    const modalAbility = document.getElementById("modalAbility");
-    const modalTag = document.getElementById("modalTag");
-    const modalAttrs = document.getElementById("modalAttrs");
-    const modalSet = document.getElementById("modalSet");
-    const modalDeleteBtn = document.getElementById("modalDeleteBtn");
+    let isAdmin = false;
+    let allCards = [];
 
-    signInAnonymously(auth).catch(err => console.log("Anon auth note:", err.message));
-    listenToCards();
-
-    function getEffectiveType(card) {
-      const cost = parseInt(card.Cost, 10) || 0;
-      const hp = parseInt(card.HP, 10) || 0;
-      const power = parseInt(card.Power, 10) || 0;
-      const ability = String(card.Ability || "").toLowerCase();
-
-      if (cost === 0 && hp === 0 && power === 0 && (ability.includes('buff') || ability.includes('bane'))) {
-        return "Domain";
-      }
-
-      return card.Type || "Card";
-    }
-
-    function buildDynamicSetMap(cardsData) {
-      const setTotals = new Set();
-      Object.values(cardsData).forEach(card => {
-        if (card.Collection_Number && String(card.Collection_Number).includes('/')) {
-          const total = parseInt(String(card.Collection_Number).split('/')[1], 10);
-          if (!isNaN(total)) setTotals.add(total);
-        }
-      });
-
-      const sortedTotals = Array.from(setTotals).sort((a, b) => a - b);
-      const map = {};
-      sortedTotals.forEach((total, index) => {
-        map[total] = `Set ${index + 1} (/${total})`;
-      });
-      return map;
-    }
-
-    function getSetLabel(numStr, setMap) {
-      if (!numStr || !String(numStr).includes('/')) return "Other Set";
-      const total = parseInt(String(numStr).split('/')[1], 10);
-      return setMap[total] || `Set (/${total})`;
-    }
-
-    function parseCollectionNum(str) {
-      if (!str || !String(str).includes('/')) return { num: 9999, setMax: 9999 };
-      const parts = String(str).split('/');
-      const num = parseInt(parts[0], 10) || 0;
-      const setMax = parseInt(parts[1], 10) || 9999;
-      return { num, setMax };
-    }
-
-    adminToggleBtn.addEventListener("click", () => {
-      if (isAdmin) return;
-      const code = prompt("Enter passcode to Edit/Add:");
-      if (code === EDIT_PASSCODE) {
+    // Monitor Firebase Auth State
+    onAuthStateChanged(auth, (user) => {
+      if (user && !user.isAnonymous) {
         isAdmin = true;
         document.body.classList.add("admin-mode");
-        adminPanel.classList.add("active");
-        adminToggleBtn.innerText = "🔓 Editing Active";
-      } else if (code !== null) {
-        alert("Incorrect passcode!");
+        adminToggleBtn.innerText = "🔓 Logged In (Admin)";
+        lockAdminBtn.style.display = "inline-block";
+      } else {
+        isAdmin = false;
+        document.body.classList.remove("admin-mode");
+        adminToggleBtn.innerText = "✏️ Admin Login";
+        lockAdminBtn.style.display = "none";
       }
     });
 
-    lockAdminBtn.addEventListener("click", () => {
-      isAdmin = false;
-      document.body.classList.remove("admin-mode");
-      adminPanel.classList.remove("active");
-      adminToggleBtn.innerText = "✏️ Edit/Add";
-    });
-
-    uploadDropZone.addEventListener("click", () => excelInput.click());
-    excelInput.addEventListener("change", handleExcelUpload);
-
-    async function handleExcelUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
-        try {
-          const data = new Uint8Array(evt.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const sheetName = workbook.SheetNames.includes('In the Game') ? 'In the Game' : workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(worksheet);
-
-          if (rows.length === 0) {
-            alert("No rows found in Excel sheet.");
-            return;
-          }
-
-          if (confirm(`Uploading this file will OVERWRITE and DELETE all existing cards in the collection.\n\nAre you sure you want to replace everything with ${rows.length} cards from sheet "${sheetName}"?`)) {
-            // Delete existing database entries
-            await set(ref(db, 'game_data'), null);
-
-            // Import new entries from Excel
-            for (const row of rows) {
-              await push(ref(db, 'game_data'), {
-                Name: row.Name || "Unnamed Card",
-                Type: row.Type || "",
-                Cost: parseInt(row.Cost, 10) || 0,
-                HP: parseInt(row.HP, 10) || 0,
-                Power: parseInt(row.Power, 10) || 0,
-                Attribute1: row.Attribute1 || "",
-                Attribute2: row.Attribute2 || "",
-                TAG: row.TAG || "",
-                Ability: row.Ability || "No ability description.",
-                Collection_Number: String(row.Collection_Number || "00/00")
-              });
-            }
-            alert(`Success! Old collection deleted and replaced with ${rows.length} cards.`);
-            excelInput.value = "";
-          }
-        } catch (err) {
-          alert("Error parsing Excel file: " + err.message);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    addCardForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      const newCard = {
-        Name: document.getElementById("addName").value.trim(),
-        Type: document.getElementById("addType").value.trim(),
-        Cost: parseInt(document.getElementById("addCost").value, 10) || 0,
-        HP: parseInt(document.getElementById("addHp").value, 10) || 0,
-        Power: parseInt(document.getElementById("addPower").value, 10) || 0,
-        TAG: document.getElementById("addTag").value.trim(),
-        Attribute1: document.getElementById("addAttr1").value.trim(),
-        Attribute2: document.getElementById("addAttr2").value.trim(),
-        Ability: document.getElementById("addAbility").value.trim() || "No ability description.",
-        Collection_Number: document.getElementById("addCollection").value.trim()
-      };
+    // Admin Login Click
+    adminToggleBtn.addEventListener("click", async () => {
+      if (isAdmin) return;
+      const email = prompt("Enter Admin Email:");
+      if (!email) return;
+      const password = prompt("Enter Admin Password:");
+      if (!password) return;
 
       try {
-        await push(ref(db, 'game_data'), newCard);
-        alert(`Card "${newCard.Name}" added successfully!`);
-        addCardForm.reset();
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("Logged in successfully!");
       } catch (err) {
-        alert("Error adding card: " + err.message);
+        alert("Login failed: " + err.message);
       }
     });
 
-    clearDbBtn.addEventListener("click", async () => {
-      if (confirm("Are you sure you want to DELETE ALL cards in the database? This cannot be undone!")) {
-        await set(ref(db, 'game_data'), null);
-        alert("Database cleared.");
+    // Logout Click
+    lockAdminBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        alert("Logged out successfully.");
+      } catch (err) {
+        alert("Logout failed: " + err.message);
       }
     });
 
-    function listenToCards() {
-      onValue(ref(db, 'game_data'), (snapshot) => {
-        rawCardsData = snapshot.val() || {};
-        populateDynamicFilters();
-        renderGallery();
-      }, (error) => {
-        cardGrid.innerHTML = `<div style="color: var(--danger); grid-column: 1/-1;">Error connecting to Firebase: ${error.message}</div>`;
-      });
-    }
-
-    function populateDynamicFilters() {
-      const setMap = buildDynamicSetMap(rawCardsData);
-
-      const types = new Set(["Domain", "Item"]);
-      Object.values(rawCardsData).forEach(c => {
-        types.add(getEffectiveType(c));
-      });
-
-      const currentType = typeFilter.value;
-      let typeHtml = `<option value="all">All Types</option>`;
-      Array.from(types).sort().forEach(t => typeHtml += `<option value="${t}">${t}</option>`);
-      typeFilter.innerHTML = typeHtml;
-      typeFilter.value = currentType;
-
-      const currentSet = setFilter.value;
-      let setHtml = `<option value="all">All Sets</option>`;
-      Object.values(setMap).forEach(s => setHtml += `<option value="${s}">${s}</option>`);
-      setFilter.innerHTML = setHtml;
-      setFilter.value = currentSet;
-    }
-
-    function renderGallery() {
-      const setMap = buildDynamicSetMap(rawCardsData);
-      const search = searchInput.value.toLowerCase();
-      const selectedSet = setFilter.value;
-      const selectedType = typeFilter.value;
-      const sortBy = sortSelect.value;
-
-      let cards = Object.entries(rawCardsData).map(([key, val]) => ({ key, ...val }));
-
-      cards = cards.filter(c => {
-        const effectiveType = getEffectiveType(c);
-        const matchesSearch = (c.Name || "").toLowerCase().includes(search) || (c.Ability || "").toLowerCase().includes(search);
-        const cardSet = getSetLabel(c.Collection_Number, setMap);
-        const matchesSet = selectedSet === "all" || cardSet === selectedSet;
-        const matchesType = selectedType === "all" || effectiveType === selectedType;
-        return matchesSearch && matchesSet && matchesType;
-      });
-
-      cards.sort((a, b) => {
-        const parsedA = parseCollectionNum(a.Collection_Number);
-        const parsedB = parseCollectionNum(b.Collection_Number);
-
-        if (sortBy === "number") {
-          if (parsedA.setMax !== parsedB.setMax) return parsedA.setMax - parsedB.setMax;
-          return parsedA.num - parsedB.num;
-        }
-        if (sortBy === "set") {
-          const setA = getSetLabel(a.Collection_Number, setMap);
-          const setB = getSetLabel(b.Collection_Number, setMap);
-          if (setA !== setB) return setA.localeCompare(setB);
-          return parsedA.num - parsedB.num;
-        }
-        if (sortBy === "name") return (a.Name || "").localeCompare(b.Name || "");
-        if (sortBy === "cost") return (b.Cost || 0) - (a.Cost || 0);
-        if (sortBy === "power") return (b.Power || 0) - (a.Power || 0);
-        if (sortBy === "hp") return (b.HP || 0) - (a.HP || 0);
-      });
-
-      cardCount.innerText = `${cards.length} Cards`;
-
-      if (cards.length === 0) {
-        cardGrid.innerHTML = `<div style="color: var(--text-muted); grid-column: 1/-1;">No cards found in collection.</div>`;
+    // Bulk Excel Import Logic
+    importBtn.addEventListener("click", () => {
+      const file = excelFileInput.files[0];
+      if (!file) {
+        alert("Please select an Excel file first.");
         return;
       }
 
-      cardGrid.innerHTML = cards.map(c => {
-        const setLabel = getSetLabel(c.Collection_Number, setMap);
-        const effectiveType = getEffectiveType(c);
-        
-        let typeClass = "card-type";
-        if (effectiveType === "Domain") typeClass += " type-domain";
-        if (effectiveType === "Item") typeClass += " type-item";
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(worksheet);
 
-        return `
-          <div class="game-card" onclick="openModal('${c.key}')">
-            <div>
-              <div class="card-header">
-                <div class="card-name">${escapeHtml(c.Name || '')}</div>
-                <span class="${typeClass}">${escapeHtml(effectiveType)}</span>
-              </div>
-              
-              <div class="card-stats" style="margin: 10px 0;">
-                <span class="stat-badge stat-cost">C: ${c.Cost ?? 0}</span>
-                <span class="stat-badge stat-hp">HP: ${c.HP ?? 0}</span>
-                <span class="stat-badge stat-power">P: ${c.Power ?? 0}</span>
-              </div>
+          const processedCards = rows.map((row, idx) => {
+            const cost = Number(row.Cost || 0);
+            const hp = Number(row.HP || 0);
+            const power = Number(row.Power || 0);
+            const abilityText = String(row.Ability || "").toLowerCase();
 
-              <div class="card-ability-preview">${escapeHtml(c.Ability || '')}</div>
-            </div>
+            let cardType = row.Type || "Unknown";
 
-            <div class="card-footer">
-              <span class="set-badge">${escapeHtml(setLabel)}</span>
-              <span class="tag-badge">${escapeHtml(c.TAG || 'No Tag')}</span>
-              <span>#${escapeHtml(c.Collection_Number || '00/00')}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
+            // Domain Auto-Classification Rule
+            if (cost === 0 && hp === 0 && power === 0 && (abilityText.includes("buff") || abilityText.includes("bane"))) {
+              cardType = "Domain";
+            }
 
-    window.openModal = (key) => {
-      const card = rawCardsData[key];
-      if (!card) return;
+            return {
+              id: row.ID || `card_${idx}`,
+              name: row.Name || "Untitled Card",
+              cost: cost,
+              hp: hp,
+              power: power,
+              type: cardType,
+              ability: row.Ability || ""
+            };
+          });
 
-      const setMap = buildDynamicSetMap(rawCardsData);
-      const effectiveType = getEffectiveType(card);
-      
-      activeCardKey = key;
-      modalName.innerText = card.Name || "Unnamed Card";
-      modalType.innerText = effectiveType;
-      
-      modalType.className = "card-type";
-      if (effectiveType === "Domain") modalType.classList.add("type-domain");
-      if (effectiveType === "Item") modalType.classList.add("type-item");
-
-      modalNumber.innerText = `#${card.Collection_Number || '00/00'}`;
-      modalCost.innerText = card.Cost ?? 0;
-      modalHp.innerText = card.HP ?? 0;
-      modalPower.innerText = card.Power ?? 0;
-      modalAbility.innerText = card.Ability || "No ability description provided.";
-      modalTag.innerText = card.TAG || "None";
-      modalSet.innerText = getSetLabel(card.Collection_Number, setMap);
-      
-      const attrs = [card.Attribute1, card.Attribute2].filter(Boolean).join(", ");
-      modalAttrs.innerText = attrs || "None";
-
-      cardModal.classList.add("active");
-    };
-
-    closeModal.addEventListener("click", () => cardModal.classList.remove("active"));
-    cardModal.addEventListener("click", (e) => {
-      if (e.target === cardModal) cardModal.classList.remove("active");
+          // Wipe & Replace DB Nodes
+          await set(ref(db, "game_data"), processedCards);
+          alert(`Successfully replaced database with ${processedCards.length} cards!`);
+          excelFileInput.value = "";
+        } catch (err) {
+          alert("Import failed: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
     });
 
-    modalDeleteBtn.addEventListener("click", async () => {
-      if (activeCardKey && confirm("Delete this card from database?")) {
-        await remove(ref(db, `game_data/${activeCardKey}`));
-        cardModal.classList.remove("active");
+    // Realtime Database Sync
+    onValue(ref(db, "game_data"), (snapshot) => {
+      const data = snapshot.val();
+      allCards = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
+      renderGallery();
+    });
+
+    // UI Rendering & Filtering
+    function renderGallery() {
+      const query = searchInput.value.toLowerCase();
+      const selectedType = typeFilter.value;
+
+      const filtered = allCards.filter(card => {
+        const matchesSearch = card.name.toLowerCase().includes(query) || card.ability.toLowerCase().includes(query);
+        const matchesType = selectedType === "All" || card.type === selectedType;
+        return matchesSearch && matchesType;
+      });
+
+      if (filtered.length === 0) {
+        galleryGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #888;">No cards found.</p>`;
+        return;
       }
-    });
+
+      galleryGrid.innerHTML = filtered.map(card => `
+        <div class="card">
+          <div>
+            <span class="card-type">${card.type}</span>
+            <h3>${card.name}</h3>
+            <div class="card-stats">Cost: ${card.cost} | HP: ${card.hp} | Power: ${card.power}</div>
+            <div class="card-ability">${card.ability || "<em>No ability text</em>"}</div>
+          </div>
+        </div>
+      `).join("");
+    }
 
     searchInput.addEventListener("input", renderGallery);
-    setFilter.addEventListener("change", renderGallery);
     typeFilter.addEventListener("change", renderGallery);
-    sortSelect.addEventListener("change", renderGallery);
-
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m]);
-    }
   </script>
 </body>
 </html>
