@@ -54,7 +54,7 @@
     .tab-btn:hover { color: var(--text-main); background-color: var(--card-bg); }
     .tab-btn.active { color: #fff; background-color: var(--accent-purple); }
 
-    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .btn {
       background-color: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main);
       padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
@@ -98,6 +98,7 @@
       background-color: var(--badge-purple-bg); color: var(--badge-purple-text);
       font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
       padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;
+      transition: background-color 0.2s, color 0.2s;
     }
     .collection-num { font-size: 0.85rem; color: var(--text-sub); font-weight: 600; }
     .card-title { font-size: 1.3rem; font-weight: 700; color: var(--text-main); word-break: break-word; }
@@ -123,9 +124,19 @@
     }
     .modal {
       background: var(--card-bg); border: 1px solid var(--card-border); padding: 24px; border-radius: 12px;
-      width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 16px;
+      width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 16px;
     }
     .modal h2 { font-size: 1.3rem; color: var(--text-main); }
+
+    /* Type Color Manager Styles */
+    .type-color-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--stats-bg); padding: 10px 14px; border-radius: 8px;
+      border: 1px solid var(--card-border); gap: 12px;
+    }
+    .color-pickers { display: flex; gap: 12px; align-items: center; }
+    .color-picker-group { display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: var(--text-sub); gap: 2px; }
+    input[type="color"] { border: none; width: 34px; height: 34px; border-radius: 6px; cursor: pointer; background: none; }
   </style>
 </head>
 <body>
@@ -134,6 +145,7 @@
     <h1>Prime Ego Portal</h1>
     <div class="header-actions">
       <button class="btn" id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
+      <button class="btn" id="typeColorsBtn" style="display: none;" onclick="openTypeColorsModal()">🎨 Type Colors</button>
       <label class="btn btn-primary" id="uploadBtn" style="display: none;">
         📁 Upload Cards Excel
         <input type="file" id="fileInput" accept=".xlsx, .xls" />
@@ -186,6 +198,7 @@
     <iframe id="loreFrame" class="doc-frame" src="about:blank"></iframe>
   </div>
 
+  <!-- Admin Login Modal -->
   <div class="modal-overlay" id="loginModal">
     <div class="modal">
       <h2>Admin Authentication</h2>
@@ -194,6 +207,20 @@
       <div style="display: flex; gap: 8px; justify-content: flex-end;">
         <button class="btn" onclick="closeAdminModal()">Cancel</button>
         <button class="btn btn-primary" onclick="checkAdminCredentials()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Type Colors Customization Modal -->
+  <div class="modal-overlay" id="typeColorsModal">
+    <div class="modal">
+      <h2>Customize Type Colors</h2>
+      <div id="typeColorsList" style="display: flex; flex-direction: column; gap: 10px; max-height: 380px; overflow-y: auto; padding-right: 4px;">
+        <!-- Dynamic color pickers populate here -->
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
+        <button class="btn" onclick="closeTypeColorsModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveTypeColors()">Save Colors</button>
       </div>
     </div>
   </div>
@@ -218,6 +245,7 @@
     const db = getDatabase(app, firebaseConfig.databaseURL);
 
     let cardDatabase = [];
+    let typeColorsMap = {};
     let currentUser = null;
 
     // Theme Management
@@ -233,7 +261,7 @@
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.getElementById('themeBtn').textContent = savedTheme === 'light' ? '☀️ Light' : '🌙 Dark';
 
-    // Google Doc Preview Link Cleaner (Fixes Option 2 kix layout bug)
+    // Google Doc Preview Link Cleaner
     function cleanGoogleDocUrl(url) {
       if (!url) return 'about:blank';
       const match = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
@@ -281,9 +309,7 @@
 
     function sortCardsList(cards, sortOption) {
       return cards.sort((a, b) => {
-        if (sortOption === 'default') {
-          return compareCardsDefault(a, b);
-        }
+        if (sortOption === 'default') return compareCardsDefault(a, b);
 
         if (sortOption === 'cost-asc') return parseNumericStat(a.Cost) - parseNumericStat(b.Cost);
         if (sortOption === 'cost-desc') return parseNumericStat(b.Cost) - parseNumericStat(a.Cost);
@@ -324,18 +350,21 @@
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
       const uploadBtn = document.getElementById('uploadBtn');
+      const typeColorsBtn = document.getElementById('typeColorsBtn');
       const rulesAdminBar = document.getElementById('rulesAdminBar');
       const loreAdminBar = document.getElementById('loreAdminBar');
       const adminBtn = document.getElementById('adminBtn');
 
       if (user && !user.isAnonymous) {
         uploadBtn.style.display = 'inline-flex';
+        typeColorsBtn.style.display = 'inline-flex';
         rulesAdminBar.style.display = 'flex';
         loreAdminBar.style.display = 'flex';
         adminBtn.textContent = '🔓 Logout Admin';
         adminBtn.classList.add('btn-danger');
       } else {
         uploadBtn.style.display = 'none';
+        typeColorsBtn.style.display = 'none';
         rulesAdminBar.style.display = 'none';
         loreAdminBar.style.display = 'none';
         adminBtn.textContent = '🔒 Admin Login';
@@ -363,6 +392,10 @@
       onValue(settingsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
+          if (data.typeColors) {
+            typeColorsMap = data.typeColors;
+            filterCards(); // Re-render with new colors
+          }
           if (data.rulesUrl) {
             document.getElementById('rulesUrlInput').value = data.rulesUrl;
             document.getElementById('rulesFrame').src = cleanGoogleDocUrl(data.rulesUrl);
@@ -440,9 +473,14 @@
 
         const formattedNum = formatCollectionNum(card.Collection_Number);
 
+        // Apply custom Type colors if configured by admin
+        const cardType = card.Type || 'CARD';
+        const typeColor = typeColorsMap[cardType];
+        const typeBadgeStyle = typeColor ? `style="background-color: ${typeColor.bg}; color: ${typeColor.text};"` : '';
+
         cardEl.innerHTML = `
           <div class="card-header">
-            <span class="type-badge">${card.Type || 'CARD'}</span>
+            <span class="type-badge" ${typeBadgeStyle}>${cardType}</span>
             <span class="collection-num">#${formattedNum}</span>
           </div>
           <div class="card-title">${card.Name || 'Untitled'}</div>
@@ -502,6 +540,7 @@
       renderCards(filtered);
     }
 
+    // Modal Control Functions
     window.closeAdminModal = function() {
       document.getElementById('loginModal').style.display = 'none';
     };
@@ -527,6 +566,88 @@
           window.closeAdminModal();
         })
         .catch(err => alert('Authentication Failed: ' + err.message));
+    };
+
+    // Type Colors Manager Functions
+    window.openTypeColorsModal = function() {
+      const modal = document.getElementById('typeColorsModal');
+      const container = document.getElementById('typeColorsList');
+      container.innerHTML = '';
+
+      const types = Array.from(new Set(cardDatabase.map(c => c.Type).filter(Boolean))).sort();
+
+      if (types.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-sub); text-align: center; padding: 20px;">No card types found in database. Please upload card data first.</div>';
+        modal.style.display = 'flex';
+        return;
+      }
+
+      types.forEach(type => {
+        const config = typeColorsMap[type] || { bg: '#2e185b', text: '#c084fc' };
+        
+        const row = document.createElement('div');
+        row.className = 'type-color-row';
+        row.dataset.type = type;
+
+        row.innerHTML = `
+          <div>
+            <span class="type-badge preview-badge" style="background-color: ${config.bg}; color: ${config.text};">${type}</span>
+          </div>
+          <div class="color-pickers">
+            <div class="color-picker-group">
+              <label>Background</label>
+              <input type="color" class="bg-picker" value="${config.bg}" />
+            </div>
+            <div class="color-picker-group">
+              <label>Text</label>
+              <input type="color" class="text-picker" value="${config.text}" />
+            </div>
+          </div>
+        `;
+
+        const badge = row.querySelector('.preview-badge');
+        const bgInput = row.querySelector('.bg-picker');
+        const textInput = row.querySelector('.text-picker');
+
+        const updatePreview = () => {
+          badge.style.backgroundColor = bgInput.value;
+          badge.style.color = textInput.value;
+        };
+
+        bgInput.addEventListener('input', updatePreview);
+        textInput.addEventListener('input', updatePreview);
+
+        container.appendChild(row);
+      });
+
+      modal.style.display = 'flex';
+    };
+
+    window.closeTypeColorsModal = function() {
+      document.getElementById('typeColorsModal').style.display = 'none';
+    };
+
+    window.saveTypeColors = function() {
+      if (!currentUser || currentUser.isAnonymous) return;
+
+      const rows = document.querySelectorAll('#typeColorsList .type-color-row');
+      const updatedColors = { ...typeColorsMap };
+
+      rows.forEach(row => {
+        const type = row.dataset.type;
+        const bg = row.querySelector('.bg-picker').value;
+        const text = row.querySelector('.text-picker').value;
+        if (type) {
+          updatedColors[type] = { bg, text };
+        }
+      });
+
+      set(ref(db, 'portal/settings/typeColors'), updatedColors)
+        .then(() => {
+          alert('Type colors saved live!');
+          window.closeTypeColorsModal();
+        })
+        .catch(err => alert('Error saving type colors: ' + err.message));
     };
 
     window.updateDocUrl = function(type) {
