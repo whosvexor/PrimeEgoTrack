@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,37 +22,53 @@
       --bane-color: #ef4444;
       --trigger-bg: #1e1b4b;
       --trigger-text: #a5b4fc;
+      --stats-bg: #0e0d17;
+      --input-bg: #161522;
+    }
+
+    [data-theme="light"] {
+      --bg-color: #f3f4f6;
+      --card-bg: #ffffff;
+      --card-border: #d1d5db;
+      --text-main: #111827;
+      --text-sub: #4b5563;
+      --badge-purple-bg: #f3e8ff;
+      --badge-purple-text: #7e22ce;
+      --trigger-bg: #e0e7ff;
+      --trigger-text: #3730a3;
+      --stats-bg: #f9fafb;
+      --input-bg: #ffffff;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; min-height: 100vh; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; min-height: 100vh; transition: background 0.2s, color 0.2s; }
 
     header { max-width: 1200px; margin: 0 auto 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
-    h1 { font-size: 1.8rem; font-weight: 700; color: #fff; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: var(--text-main); }
 
     .tab-nav { max-width: 1200px; margin: 0 auto 24px; display: flex; gap: 8px; border-bottom: 2px solid var(--card-border); padding-bottom: 8px; }
     .tab-btn {
       background: none; border: none; color: var(--text-sub); font-size: 1rem; font-weight: 600;
       padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
     }
-    .tab-btn:hover { color: #fff; background-color: var(--card-bg); }
+    .tab-btn:hover { color: var(--text-main); background-color: var(--card-bg); }
     .tab-btn.active { color: #fff; background-color: var(--accent-purple); }
 
     .header-actions { display: flex; gap: 10px; align-items: center; }
     .btn {
-      background-color: var(--card-bg); border: 1px solid var(--card-border); color: #fff;
+      background-color: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main);
       padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
     }
     .btn:hover { border-color: var(--accent-purple); }
-    .btn-primary { background: var(--accent-purple); border: none; }
+    .btn-primary { background: var(--accent-purple); border: none; color: #fff; }
     .btn-primary:hover { opacity: 0.9; }
-    .btn-danger { background: #991b1b; border: none; }
+    .btn-danger { background: #991b1b; border: none; color: #fff; }
     #fileInput { display: none; }
 
     .controls { max-width: 1200px; margin: 0 auto 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
     input[type="text"], input[type="email"], input[type="password"], select {
-      background-color: var(--card-bg); border: 1px solid var(--card-border); color: #fff;
+      background-color: var(--input-bg); border: 1px solid var(--card-border); color: var(--text-main);
       padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; outline: none;
     }
     input[type="text"] { flex: 1; min-width: 200px; }
@@ -61,8 +77,11 @@
     .tab-content { display: none; max-width: 1200px; margin: 0 auto; }
     .tab-content.active { display: block; }
 
-    .doc-container { width: 100%; height: 800px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--card-border); }
-    .doc-container iframe { width: 100%; height: 100%; border: none; }
+    .doc-frame {
+      width: 100%; height: 800px; border-radius: 12px; border: 1px solid var(--card-border);
+      background: #ffffff;
+    }
+
     .doc-admin-bar { background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; margin-bottom: 16px; display: none; gap: 10px; align-items: center; }
 
     .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
@@ -81,18 +100,18 @@
       padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;
     }
     .collection-num { font-size: 0.85rem; color: var(--text-sub); font-weight: 600; }
-    .card-title { font-size: 1.3rem; font-weight: 700; color: #fff; word-break: break-word; }
+    .card-title { font-size: 1.3rem; font-weight: 700; color: var(--text-main); word-break: break-word; }
 
     .badges-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .sub-badge { font-size: 0.8rem; font-weight: 600; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; }
-    .trigger-badge { background-color: var(--trigger-bg); color: var(--trigger-text); border: 1px solid #312e81; }
-    .attr-badge { background-color: #1f2937; color: #d1d5db; }
+    .trigger-badge { background-color: var(--trigger-bg); color: var(--trigger-text); border: 1px solid var(--card-border); }
+    .attr-badge { background-color: var(--stats-bg); color: var(--text-sub); border: 1px solid var(--card-border); }
 
-    .stats-row { display: flex; gap: 12px; background: #0e0d17; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; }
-    .stat-item { display: flex; gap: 4px; }
+    .stats-row { display: flex; gap: 12px; background: var(--stats-bg); padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; border: 1px solid var(--card-border); }
+    .stat-item { display: flex; gap: 4px; color: var(--text-main); }
     .stat-label { color: var(--text-sub); }
 
-    .card-ability { font-size: 0.92rem; line-height: 1.5; color: #e5e7eb; padding-top: 4px; border-top: 1px solid #232136; }
+    .card-ability { font-size: 0.92rem; line-height: 1.5; color: var(--text-main); padding-top: 4px; border-top: 1px solid var(--card-border); }
     .buff-tag { color: var(--buff-color); font-weight: 700; }
     .bane-tag { color: var(--bane-color); font-weight: 700; }
 
@@ -106,7 +125,7 @@
       background: var(--card-bg); border: 1px solid var(--card-border); padding: 24px; border-radius: 12px;
       width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 16px;
     }
-    .modal h2 { font-size: 1.3rem; color: #fff; }
+    .modal h2 { font-size: 1.3rem; color: var(--text-main); }
   </style>
 </head>
 <body>
@@ -114,6 +133,7 @@
   <header>
     <h1>Prime Ego Portal</h1>
     <div class="header-actions">
+      <button class="btn" id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
       <label class="btn btn-primary" id="uploadBtn" style="display: none;">
         📁 Upload Cards Excel
         <input type="file" id="fileInput" accept=".xlsx, .xls" />
@@ -131,6 +151,16 @@
   <div id="cardsTab" class="tab-content active">
     <div class="controls">
       <input type="text" id="searchInput" placeholder="Search by name or ability..." />
+      <select id="sortSelect">
+        <option value="default">Sort: Default (# Collection)</option>
+        <option value="cost-asc">Cost: Low to High</option>
+        <option value="cost-desc">Cost: High to Low</option>
+        <option value="hp-asc">HP: Low to High</option>
+        <option value="hp-desc">HP: High to Low</option>
+        <option value="power-asc">Power: Low to High</option>
+        <option value="power-desc">Power: High to Low</option>
+        <option value="name-asc">Name: A - Z</option>
+      </select>
       <select id="setFilter"><option value="ALL">All Sets</option></select>
       <select id="typeFilter"><option value="ALL">All Types</option></select>
       <select id="tagFilter"><option value="ALL">All Triggers / Tags</option></select>
@@ -142,22 +172,18 @@
 
   <div id="rulesTab" class="tab-content">
     <div class="doc-admin-bar" id="rulesAdminBar">
-      <input type="text" id="rulesUrlInput" placeholder="Paste Google Doc Embed URL" />
+      <input type="text" id="rulesUrlInput" placeholder="Paste Google Doc share link..." />
       <button class="btn btn-primary" onclick="updateDocUrl('rules')">Save Rules Link</button>
     </div>
-    <div class="doc-container">
-      <iframe id="rulesFrame" src="about:blank"></iframe>
-    </div>
+    <iframe id="rulesFrame" class="doc-frame" src="about:blank"></iframe>
   </div>
 
   <div id="loreTab" class="tab-content">
     <div class="doc-admin-bar" id="loreAdminBar">
-      <input type="text" id="loreUrlInput" placeholder="Paste Google Doc Embed URL" />
+      <input type="text" id="loreUrlInput" placeholder="Paste Google Doc share link..." />
       <button class="btn btn-primary" onclick="updateDocUrl('lore')">Save Lore Link</button>
     </div>
-    <div class="doc-container">
-      <iframe id="loreFrame" src="about:blank"></iframe>
-    </div>
+    <iframe id="loreFrame" class="doc-frame" src="about:blank"></iframe>
   </div>
 
   <div class="modal-overlay" id="loginModal">
@@ -194,6 +220,29 @@
     let cardDatabase = [];
     let currentUser = null;
 
+    // Theme Management
+    window.toggleTheme = function() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const target = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', target);
+      localStorage.setItem('theme', target);
+      document.getElementById('themeBtn').textContent = target === 'light' ? '☀️ Light' : '🌙 Dark';
+    };
+
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeBtn').textContent = savedTheme === 'light' ? '☀️ Light' : '🌙 Dark';
+
+    // Google Doc Preview Link Cleaner (Fixes Option 2 kix layout bug)
+    function cleanGoogleDocUrl(url) {
+      if (!url) return 'about:blank';
+      const match = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        return `https://docs.google.com/document/d/${match[1]}/preview`;
+      }
+      return url.trim();
+    }
+
     function getCardSortKeys(card) {
       const val = card.Collection_Number;
       if (!val || String(val).toLowerCase() === 'nan') {
@@ -215,7 +264,7 @@
       return { setTotal, cardNum };
     }
 
-    function compareCards(a, b) {
+    function compareCardsDefault(a, b) {
       const keyA = getCardSortKeys(a);
       const keyB = getCardSortKeys(b);
 
@@ -223,6 +272,34 @@
         return keyA.setTotal - keyB.setTotal;
       }
       return keyA.cardNum - keyB.cardNum;
+    }
+
+    function parseNumericStat(val) {
+      if (val === undefined || val === null || val === '' || isNaN(val)) return -Infinity;
+      return Number(val);
+    }
+
+    function sortCardsList(cards, sortOption) {
+      return cards.sort((a, b) => {
+        if (sortOption === 'default') {
+          return compareCardsDefault(a, b);
+        }
+
+        if (sortOption === 'cost-asc') return parseNumericStat(a.Cost) - parseNumericStat(b.Cost);
+        if (sortOption === 'cost-desc') return parseNumericStat(b.Cost) - parseNumericStat(a.Cost);
+
+        if (sortOption === 'hp-asc') return parseNumericStat(a.HP) - parseNumericStat(b.HP);
+        if (sortOption === 'hp-desc') return parseNumericStat(b.HP) - parseNumericStat(a.HP);
+
+        if (sortOption === 'power-asc') return parseNumericStat(a.Power) - parseNumericStat(b.Power);
+        if (sortOption === 'power-desc') return parseNumericStat(b.Power) - parseNumericStat(a.Power);
+
+        if (sortOption === 'name-asc') {
+          return (a.Name || '').localeCompare(b.Name || '');
+        }
+
+        return 0;
+      });
     }
 
     function formatCollectionNum(val) {
@@ -271,9 +348,9 @@
       onValue(cardsRef, (snapshot) => {
         const data = snapshot.val();
         if (data && Array.isArray(data)) {
-          cardDatabase = data.sort(compareCards);
+          cardDatabase = data;
           populateFilterDropdowns(cardDatabase);
-          renderCards(cardDatabase);
+          filterCards();
         } else {
           document.getElementById('cardGallery').innerHTML = '<div class="empty-state">No card database found in Realtime Database. Admin can upload Excel file.</div>';
         }
@@ -287,12 +364,12 @@
         const data = snapshot.val();
         if (data) {
           if (data.rulesUrl) {
-            document.getElementById('rulesFrame').src = data.rulesUrl;
             document.getElementById('rulesUrlInput').value = data.rulesUrl;
+            document.getElementById('rulesFrame').src = cleanGoogleDocUrl(data.rulesUrl);
           }
           if (data.loreUrl) {
-            document.getElementById('loreFrame').src = data.loreUrl;
             document.getElementById('loreUrlInput').value = data.loreUrl;
+            document.getElementById('loreFrame').src = cleanGoogleDocUrl(data.loreUrl);
           }
         }
       });
@@ -409,8 +486,9 @@
       const selectedSet = document.getElementById('setFilter').value;
       const selectedType = document.getElementById('typeFilter').value;
       const selectedTag = document.getElementById('tagFilter').value;
+      const sortOption = document.getElementById('sortSelect').value;
 
-      const filtered = cardDatabase.filter(card => {
+      let filtered = cardDatabase.filter(card => {
         const matchQuery = (card.Name && card.Name.toLowerCase().includes(query)) ||
                            (card.Ability && card.Ability.toLowerCase().includes(query));
         const matchSet = selectedSet === 'ALL' || String(card.Collection_Number).includes(selectedSet);
@@ -420,7 +498,7 @@
         return matchQuery && matchSet && matchType && matchTag;
       });
 
-      filtered.sort(compareCards);
+      filtered = sortCardsList(filtered, sortOption);
       renderCards(filtered);
     }
 
@@ -455,11 +533,12 @@
       if (!currentUser || currentUser.isAnonymous) return;
       const field = type === 'rules' ? 'rulesUrl' : 'loreUrl';
       const inputId = type === 'rules' ? 'rulesUrlInput' : 'loreUrlInput';
-      const url = document.getElementById(inputId).value;
+      const rawUrl = document.getElementById(inputId).value;
+      const cleanedUrl = cleanGoogleDocUrl(rawUrl);
 
-      if (url) {
-        set(ref(db, `portal/settings/${field}`), url)
-          .then(() => alert(`${type.toUpperCase()} document link saved globally!`))
+      if (cleanedUrl) {
+        set(ref(db, `portal/settings/${field}`), rawUrl)
+          .then(() => alert(`${type.toUpperCase()} link saved globally!`))
           .catch(err => alert('Error saving link: ' + err.message));
       }
     };
@@ -487,6 +566,7 @@
     });
 
     document.getElementById('searchInput').addEventListener('input', filterCards);
+    document.getElementById('sortSelect').addEventListener('change', filterCards);
     document.getElementById('setFilter').addEventListener('change', filterCards);
     document.getElementById('typeFilter').addEventListener('change', filterCards);
     document.getElementById('tagFilter').addEventListener('change', filterCards);
