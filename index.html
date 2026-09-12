@@ -3,368 +3,180 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prime Ego Card Gallery</title>
-  
-  <!-- SheetJS for Excel Parsing -->
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <title>Prime Ego - Cards, Rules & Lore</title>
+
+  <!-- Excel Parser Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
-    /* Dark Mode Theme Variables (Default) */
     :root {
-      --bg-color: #0d0f14;
-      --card-bg: #161922;
-      --card-border: #262b3a;
-      --card-hover-border: #3b4259;
-      --text-main: #f0f2f5;
-      --text-muted: #94a3b8;
-      --input-bg: #1e2230;
-      --input-border: #262b3a;
-      --stat-bg: #222736;
-      --stat-color: #38bdf8;
-      --accent-blue: #3b82f6;
-      --accent-danger: #ef4444;
+      --bg-color: #0b0b12;
+      --card-bg: #161522;
+      --card-border: #28263c;
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --accent-purple: #7c3aed;
+      --badge-purple-bg: #2e185b;
+      --badge-purple-text: #c084fc;
       --buff-color: #10b981;
-      --bane-color: #f43f5e;
-      --domain-tag-bg: rgba(168, 85, 247, 0.15);
-      --domain-tag-text: #d8b4fe;
+      --bane-color: #ef4444;
+      --trigger-bg: #1e1b4b;
+      --trigger-text: #a5b4fc;
     }
 
-    /* Light Mode Theme Variables */
-    body.light-mode {
-      --bg-color: #f1f5f9;
-      --card-bg: #ffffff;
-      --card-border: #e2e8f0;
-      --card-hover-border: #cbd5e1;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --input-bg: #ffffff;
-      --input-border: #cbd5e1;
-      --stat-bg: #e2e8f0;
-      --stat-color: #0284c7;
-      --domain-tag-bg: rgba(168, 85, 247, 0.12);
-      --domain-tag-text: #7e22ce;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; min-height: 100vh; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-      background-color: var(--bg-color); 
-      color: var(--text-main); 
-      padding: 16px;
-      line-height: 1.5;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
+    header { max-width: 1200px; margin: 0 auto 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: #fff; }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
+    .tab-nav { max-width: 1200px; margin: 0 auto 24px; display: flex; gap: 8px; border-bottom: 2px solid var(--card-border); padding-bottom: 8px; }
+    .tab-btn {
+      background: none; border: none; color: var(--text-sub); font-size: 1rem; font-weight: 600;
+      padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
     }
+    .tab-btn:hover { color: #fff; background-color: var(--card-bg); }
+    .tab-btn.active { color: #fff; background-color: var(--accent-purple); }
 
-    /* Header Navigation */
-    .header { 
-      display: flex; 
-      flex-direction: column;
-      gap: 12px;
-      padding-bottom: 20px; 
-      border-bottom: 1px solid var(--card-border); 
-      margin-bottom: 20px; 
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      background-color: var(--card-bg); border: 1px solid var(--card-border); color: #fff;
+      padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
     }
+    .btn:hover { border-color: var(--accent-purple); }
+    .btn-primary { background: var(--accent-purple); border: none; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-danger { background: #991b1b; border: none; }
+    #fileInput { display: none; }
 
-    @media (min-width: 640px) {
-      .header {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-      }
+    .controls { max-width: 1200px; margin: 0 auto 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    input[type="text"], input[type="email"], input[type="password"], select {
+      background-color: var(--card-bg); border: 1px solid var(--card-border); color: #fff;
+      padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; outline: none;
     }
+    input[type="text"] { flex: 1; min-width: 200px; }
+    input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, select:focus { border-color: var(--accent-purple); }
 
-    .title {
-      font-size: 1.5rem;
-      font-weight: 800;
-      letter-spacing: -0.025em;
-      background: linear-gradient(135deg, #60a5fa, #a855f7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+    .tab-content { display: none; max-width: 1200px; margin: 0 auto; }
+    .tab-content.active { display: block; }
 
-    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .doc-container { width: 100%; height: 800px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--card-border); }
+    .doc-container iframe { width: 100%; height: 100%; border: none; }
+    .doc-admin-bar { background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px; border-radius: 8px; margin-bottom: 16px; display: none; gap: 10px; align-items: center; }
 
-    .btn { 
-      padding: 10px 18px; 
-      background-color: var(--accent-blue); 
-      color: white; 
-      border: none; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      font-weight: 600; 
-      font-size: 0.9rem;
-      transition: all 0.2s ease;
-      touch-action: manipulation;
-    }
-    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-    .btn-danger { background-color: var(--accent-danger); }
-    .btn-secondary { background-color: #334155; color: #f8fafc; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
 
-    /* Admin Management Panel */
-    .admin-controls { 
-      display: none; 
-      background: var(--card-bg); 
-      padding: 20px; 
-      border-radius: 12px; 
-      margin-bottom: 24px; 
-      border: 1px solid var(--card-border); 
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    .card {
+      background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
+      padding: 18px; display: flex; flex-direction: column; gap: 12px; position: relative;
+      transition: transform 0.2s, border-color 0.2s;
     }
-    body.admin-mode .admin-controls { display: block; }
-    .admin-controls h3 { margin-bottom: 8px; font-size: 1.1rem; color: var(--text-main); }
-    .admin-controls p { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 14px; }
-    
-    .upload-box {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    @media (min-width: 640px) {
-      .upload-box { flex-direction: row; align-items: center; }
-    }
+    .card:hover { transform: translateY(-2px); border-color: var(--accent-purple); }
 
-    /* Color Customizer Section */
-    .color-customizer {
-      border-top: 1px solid var(--card-border);
-      padding-top: 16px;
-      margin-top: 16px;
+    .card-header { display: flex; justify-content: space-between; align-items: center; }
+    .type-badge {
+      background-color: var(--badge-purple-bg); color: var(--badge-purple-text);
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;
     }
-    .color-picker-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-      margin: 12px 0 16px 0;
-    }
-    .color-picker-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--input-bg);
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--input-border);
-    }
-    .color-picker-item label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-main);
-      flex-grow: 1;
-    }
-    .color-picker-item input[type="color"] {
-      border: none;
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
-      cursor: pointer;
-      background: transparent;
-    }
+    .collection-num { font-size: 0.85rem; color: var(--text-sub); font-weight: 600; }
+    .card-title { font-size: 1.3rem; font-weight: 700; color: #fff; word-break: break-word; }
 
-    /* Filter & Search Controls Bar */
-    .filter-bar { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 12px; 
-      margin-bottom: 24px; 
-    }
-    @media (min-width: 640px) {
-      .filter-bar { flex-direction: row; }
-    }
+    .badges-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .sub-badge { font-size: 0.8rem; font-weight: 600; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; }
+    .trigger-badge { background-color: var(--trigger-bg); color: var(--trigger-text); border: 1px solid #312e81; }
+    .attr-badge { background-color: #1f2937; color: #d1d5db; }
 
-    input[type="text"], input[type="file"], select { 
-      padding: 12px 16px; 
-      background: var(--input-bg); 
-      border: 1px solid var(--input-border); 
-      color: var(--text-main); 
-      border-radius: 8px; 
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    input[type="text"]:focus, select:focus { border-color: var(--accent-blue); }
-    input[type="text"] { flex-grow: 1; }
+    .stats-row { display: flex; gap: 12px; background: #0e0d17; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; }
+    .stat-item { display: flex; gap: 4px; }
+    .stat-label { color: var(--text-sub); }
 
-    /* Responsive Cards Grid */
-    .gallery { 
-      display: grid; 
-      grid-template-columns: 1fr; 
-      gap: 16px; 
-    }
-    @media (min-width: 480px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
-    @media (min-width: 768px) { .gallery { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
-    @media (min-width: 1024px) { .gallery { grid-template-columns: repeat(4, 1fr); } }
-
-    /* Card Styling */
-    .card { 
-      background: var(--card-bg); 
-      padding: 18px; 
-      border-radius: 12px; 
-      border: 1px solid var(--card-border); 
-      display: flex; 
-      flex-direction: column; 
-      justify-content: space-between; 
-      transition: transform 0.2s, border-color 0.2s, background-color 0.3s;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .card:hover { 
-      transform: translateY(-3px); 
-      border-color: var(--card-hover-border);
-    }
-
-    .card-header-type {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    /* Dynamic Card Type Badges */
-    .card-type { 
-      font-size: 0.75em; 
-      font-weight: 700;
-      text-transform: uppercase; 
-      letter-spacing: 0.05em;
-      padding: 4px 10px; 
-      border-radius: 6px; 
-      transition: all 0.2s ease;
-    }
-
-    /* Collection Number Badge */
-    .card-number {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      background: var(--input-bg);
-      padding: 3px 8px;
-      border-radius: 6px;
-      border: 1px solid var(--input-border);
-    }
-
-    .card h3 { 
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--text-main); 
-      margin-bottom: 8px;
-    }
-
-    /* Stats Grid */
-    .card-stats { 
-      display: flex;
-      gap: 8px;
-      margin: 12px 0; 
-      font-size: 0.85rem;
-    }
-    .stat-pill {
-      background: var(--stat-bg);
-      padding: 4px 8px;
-      border-radius: 6px;
-      color: var(--stat-color);
-      font-weight: 600;
-    }
-
-    /* Domain Special Tag Bar */
-    .domain-tag-bar {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin: 10px 0;
-      padding: 4px 10px;
-      background: var(--domain-tag-bg);
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--domain-tag-text);
-    }
-
-    .card-ability { 
-      font-size: 0.9rem; 
-      color: var(--text-main); 
-      opacity: 0.9;
-      line-height: 1.5; 
-      margin-top: 6px;
-    }
-
-    /* Buff & Bane Text Styling */
+    .card-ability { font-size: 0.92rem; line-height: 1.5; color: #e5e7eb; padding-top: 4px; border-top: 1px solid #232136; }
     .buff-tag { color: var(--buff-color); font-weight: 700; }
     .bane-tag { color: var(--bane-color); font-weight: 700; }
+
+    .empty-state { text-align: center; grid-column: 1 / -1; padding: 40px; color: var(--text-sub); }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000;
+    }
+    .modal {
+      background: var(--card-bg); border: 1px solid var(--card-border); padding: 24px; border-radius: 12px;
+      width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 16px;
+    }
+    .modal h2 { font-size: 1.3rem; color: #fff; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="header">
-      <h1 class="title">Prime Ego Gallery</h1>
-      <div class="btn-group">
-        <button id="themeToggleBtn" class="btn btn-secondary">☀️ Light Mode</button>
-        <button id="adminToggleBtn" class="btn btn-secondary">✏️ Admin Login</button>
-        <button id="lockAdminBtn" class="btn btn-danger" style="display:none;">🔒 Logout</button>
-      </div>
+  <header>
+    <h1>Prime Ego Portal</h1>
+    <div class="header-actions">
+      <label class="btn btn-primary" id="uploadBtn" style="display: none;">
+        📁 Upload Cards Excel
+        <input type="file" id="fileInput" accept=".xlsx, .xls" />
+      </label>
+      <button class="btn" id="adminBtn" onclick="toggleAdminModal()">🔒 Admin Login</button>
     </div>
+  </header>
 
-    <!-- Admin Management Panel -->
-    <div id="adminPanel" class="admin-controls">
-      <h3>Database Bulk Import</h3>
-      <p>Upload an Excel file (<code>.xlsx</code>) to replace all cards in the database:</p>
-      <div class="upload-box">
-        <input type="file" id="excelFileInput" accept=".xlsx, .xls" />
-        <button id="importBtn" class="btn">Upload & Replace Database</button>
-      </div>
-
-      <!-- Card Type Color Customizer -->
-      <div class="color-customizer">
-        <h3>Card Type Colors Customizer</h3>
-        <p>Pick custom badge colors for each card type:</p>
-        <div id="colorPickerGrid" class="color-picker-grid"></div>
-        <button id="saveColorsBtn" class="btn">Save Type Colors</button>
-      </div>
-    </div>
-
-    <!-- Filter, Search & Sorting Bar -->
-    <div class="filter-bar">
-      <input type="text" id="searchInput" placeholder="Search by name or ability text..." />
-      
-      <!-- Type Filter -->
-      <select id="typeFilter">
-        <option value="All">All Types</option>
-      </select>
-
-      <!-- Sorting Selector -->
-      <select id="sortBy">
-        <option value="collection_asc">Collection # (Ascending)</option>
-        <option value="collection_desc">Collection # (Descending)</option>
-        <option value="name_asc">Name (A - Z)</option>
-        <option value="name_desc">Name (Z - A)</option>
-        <option value="cost_asc">Cost (Low to High)</option>
-        <option value="cost_desc">Cost (High to Low)</option>
-        <option value="power_desc">Power (High to Low)</option>
-        <option value="hp_desc">HP (High to Low)</option>
-      </select>
-    </div>
-
-    <!-- Cards Output Grid -->
-    <div id="galleryGrid" class="gallery"></div>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('cardsTab', this)">🎴 Card Tracker</button>
+    <button class="tab-btn" onclick="switchTab('rulesTab', this)">📜 Rules</button>
+    <button class="tab-btn" onclick="switchTab('loreTab', this)">📖 Lore</button>
   </div>
 
-  <!-- Firebase Integration Script -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword, 
-      signOut, 
-      onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  <div id="cardsTab" class="tab-content active">
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search by name or ability..." />
+      <select id="setFilter"><option value="ALL">All Sets</option></select>
+      <select id="typeFilter"><option value="ALL">All Types</option></select>
+      <select id="tagFilter"><option value="ALL">All Triggers / Tags</option></select>
+    </div>
+    <div class="gallery" id="cardGallery">
+      <div class="empty-state">Connecting to Realtime Database...</div>
+    </div>
+  </div>
 
-    // Firebase Credentials
+  <div id="rulesTab" class="tab-content">
+    <div class="doc-admin-bar" id="rulesAdminBar">
+      <input type="text" id="rulesUrlInput" placeholder="Paste Google Doc Embed URL" />
+      <button class="btn btn-primary" onclick="updateDocUrl('rules')">Save Rules Link</button>
+    </div>
+    <div class="doc-container">
+      <iframe id="rulesFrame" src="about:blank"></iframe>
+    </div>
+  </div>
+
+  <div id="loreTab" class="tab-content">
+    <div class="doc-admin-bar" id="loreAdminBar">
+      <input type="text" id="loreUrlInput" placeholder="Paste Google Doc Embed URL" />
+      <button class="btn btn-primary" onclick="updateDocUrl('lore')">Save Lore Link</button>
+    </div>
+    <div class="doc-container">
+      <iframe id="loreFrame" src="about:blank"></iframe>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal">
+      <h2>Admin Authentication</h2>
+      <input type="email" id="adminEmail" placeholder="Admin Email" />
+      <input type="password" id="adminPassword" placeholder="Admin Password" />
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button class="btn" onclick="closeAdminModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="checkAdminCredentials()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyBhGXBgEcVDihD3od5XGJB7mmBg7_Kxwt4",
       authDomain: "pego-a3b20.firebaseapp.com",
@@ -376,329 +188,321 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
     const auth = getAuth(app);
+    const db = getDatabase(app, firebaseConfig.databaseURL);
 
-    const themeToggleBtn = document.getElementById("themeToggleBtn");
-    const adminToggleBtn = document.getElementById("adminToggleBtn");
-    const lockAdminBtn = document.getElementById("lockAdminBtn");
-    const excelFileInput = document.getElementById("excelFileInput");
-    const importBtn = document.getElementById("importBtn");
-    const searchInput = document.getElementById("searchInput");
-    const typeFilter = document.getElementById("typeFilter");
-    const sortBy = document.getElementById("sortBy");
-    const galleryGrid = document.getElementById("galleryGrid");
-    const colorPickerGrid = document.getElementById("colorPickerGrid");
-    const saveColorsBtn = document.getElementById("saveColorsBtn");
+    let cardDatabase = [];
+    let currentUser = null;
 
-    let isAdmin = false;
-    let allCards = [];
-    let typeColors = {};
-
-    // --- Theme (Light / Dark Mode) Handling ---
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "light") {
-      document.body.classList.add("light-mode");
-      themeToggleBtn.innerText = "🌙 Dark Mode";
-    } else {
-      themeToggleBtn.innerText = "☀️ Light Mode";
-    }
-
-    themeToggleBtn.addEventListener("click", () => {
-      document.body.classList.toggle("light-mode");
-      const isLight = document.body.classList.contains("light-mode");
-      localStorage.setItem("theme", isLight ? "light" : "dark");
-      themeToggleBtn.innerText = isLight ? "🌙 Dark Mode" : "☀️ Light Mode";
-    });
-
-    // Default Fallback Card Type Colors
-    const defaultColors = {
-      "Domain": "#a855f7",
-      "Item": "#06b6d4",
-      "Watcher": "#3b82f6",
-      "Patron": "#10b981",
-      "Designer": "#f59e0b",
-      "Creator": "#ec4899",
-      "Discord": "#8b5cf6",
-      "Legacy": "#64748b",
-      "Champion": "#eab308"
-    };
-
-    // Monitor Firebase Auth State
-    onAuthStateChanged(auth, (user) => {
-      if (user && !user.isAnonymous) {
-        isAdmin = true;
-        document.body.classList.add("admin-mode");
-        adminToggleBtn.innerText = "🔓 Logged In (Admin)";
-        lockAdminBtn.style.display = "inline-block";
-        renderColorPickers();
-      } else {
-        isAdmin = false;
-        document.body.classList.remove("admin-mode");
-        adminToggleBtn.innerText = "✏️ Admin Login";
-        lockAdminBtn.style.display = "none";
+    function getCardSortKeys(card) {
+      const val = card.Collection_Number;
+      if (!val || String(val).toLowerCase() === 'nan') {
+        return { setTotal: 99999, cardNum: 99999 };
       }
-    });
-
-    // Admin Login Handler
-    adminToggleBtn.addEventListener("click", async () => {
-      if (isAdmin) return;
-      const email = prompt("Enter Admin Email:");
-      if (!email) return;
-      const password = prompt("Enter Admin Password:");
-      if (!password) return;
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        alert("Logged in successfully!");
-      } catch (err) {
-        alert("Login failed: " + err.message);
-      }
-    });
-
-    // Logout Handler
-    lockAdminBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-        alert("Logged out successfully.");
-      } catch (err) {
-        alert("Logout failed: " + err.message);
-      }
-    });
-
-    // Helper: Safe numeric parsing
-    const safeNum = (val) => {
-      const parsed = Number(val);
-      return isNaN(parsed) ? 0 : parsed;
-    };
-
-    // Helper: Parse Collection Number into Card Number and Set Total
-    function parseCollectionNum(str) {
-      if (!str || typeof str !== 'string' || !str.includes('/')) {
-        return { num: 999999, total: 999999 };
-      }
-      const parts = str.split('/');
-      return {
-        num: parseInt(parts[0].trim(), 10) || 999999,
-        total: parseInt(parts[1].trim(), 10) || 999999
-      };
-    }
-
-    // Bulk Excel Import Logic
-    importBtn.addEventListener("click", () => {
-      const file = excelFileInput.files[0];
-      if (!file) {
-        alert("Please select an Excel file first.");
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(worksheet);
-
-          const processedCards = rows.map((row, idx) => {
-            const cost = safeNum(row.Cost);
-            const hp = safeNum(row.HP);
-            const power = safeNum(row.Power);
-            const abilityText = String(row.Ability || "");
-            const abilityLower = abilityText.toLowerCase();
-
-            let cardType = row.Type ? String(row.Type).trim() : "Unknown";
-
-            // Domain Classification Rule
-            if (cardType.toLowerCase() === "domain" || (cost === 0 && hp === 0 && power === 0 && (abilityLower.includes("buff") || abilityLower.includes("bane")))) {
-              cardType = "Domain";
-            }
-
-            // Flexible lookup for Collection Number column variations
-            const rawColNum = row.Collection_Number || row["Collection Number"] || row.collection_number || row["Collection number"] || row.COLLECTION_NUMBER || "";
-
-            return {
-              id: row.ID ? String(row.ID) : `card_${idx}`,
-              name: String(row.Name || row.NAME || "Untitled Card"),
-              cost: cost,
-              hp: hp,
-              power: power,
-              type: cardType,
-              ability: abilityText,
-              collectionNumber: String(rawColNum).trim()
-            };
-          });
-
-          await set(ref(db, "game_data"), processedCards);
-          alert(`Successfully replaced database with ${processedCards.length} cards!`);
-          excelFileInput.value = "";
-        } catch (err) {
-          alert("Import failed: " + err.message);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    });
-
-    // Realtime Database Sync - Cards Data
-    onValue(ref(db, "game_data"), (snapshot) => {
-      const data = snapshot.val();
-      allCards = data ? (Array.isArray(data) ? data : Object.values(data)) : [];
-      updateTypeFilterOptions();
-      renderColorPickers();
-      renderGallery();
-    });
-
-    // Realtime Database Sync - Custom Type Colors
-    onValue(ref(db, "type_colors"), (snapshot) => {
-      typeColors = snapshot.val() || {};
-      renderColorPickers();
-      renderGallery();
-    });
-
-    // Save Custom Type Colors
-    saveColorsBtn.addEventListener("click", async () => {
-      const updatedColors = {};
-      document.querySelectorAll(".color-picker-input").forEach(input => {
-        updatedColors[input.dataset.type] = input.value;
-      });
-
-      try {
-        await set(ref(db, "type_colors"), updatedColors);
-        alert("Card type colors saved successfully!");
-      } catch (err) {
-        alert("Failed to save colors: " + err.message);
-      }
-    });
-
-    // Render Admin Color Pickers
-    function renderColorPickers() {
-      if (!isAdmin) return;
-      const types = [...new Set(allCards.map(c => c.type).filter(Boolean))].sort();
-
-      colorPickerGrid.innerHTML = types.map(t => {
-        const color = typeColors[t] || defaultColors[t] || "#3b82f6";
-        return `
-          <div class="color-picker-item">
-            <label>${t}</label>
-            <input type="color" class="color-picker-input" data-type="${t}" value="${color}">
-          </div>
-        `;
-      }).join("");
-    }
-
-    // Dynamic Filter Dropdown Options
-    function updateTypeFilterOptions() {
-      const currentSelected = typeFilter.value;
-      const types = ["All", ...new Set(allCards.map(c => c.type).filter(Boolean))].sort();
       
-      typeFilter.innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join("");
-      if (types.includes(currentSelected)) {
-        typeFilter.value = currentSelected;
+      let str = String(val).replace(/^#/, '').trim();
+      let cardNum = 99999;
+      let setTotal = 99999;
+
+      if (str.includes('/')) {
+        const parts = str.split('/');
+        cardNum = parseInt(parts[0].trim(), 10) || 99999;
+        setTotal = parseInt(parts[1].trim(), 10) || 99999;
+      } else {
+        cardNum = parseInt(str, 10) || 99999;
       }
+
+      return { setTotal, cardNum };
     }
 
-    // Format Ability Text (Highlight Buff / Bane)
-    function formatAbilityText(abilityText) {
-      if (!abilityText) return "<em>No ability text</em>";
-      return abilityText
-        .replace(/\\/g, " ")
-        .replace(/Buff:/gi, '<span class="buff-tag">Buff:</span>')
-        .replace(/Bane:/gi, '<br><span class="bane-tag">Bane:</span>');
+    function compareCards(a, b) {
+      const keyA = getCardSortKeys(a);
+      const keyB = getCardSortKeys(b);
+
+      if (keyA.setTotal !== keyB.setTotal) {
+        return keyA.setTotal - keyB.setTotal;
+      }
+      return keyA.cardNum - keyB.cardNum;
     }
 
-    // Get Color for Card Type
-    function getTypeColor(type) {
-      return typeColors[type] || defaultColors[type] || "#3b82f6";
+    function formatCollectionNum(val) {
+      if (val === undefined || val === null || val === '' || String(val).toLowerCase() === 'nan') {
+        return '---';
+      }
+      let str = String(val).trim();
+      if (str.startsWith('#')) str = str.substring(1).trim();
+
+      if (str.includes('/')) {
+        const parts = str.split('/');
+        const num = parts[0].trim();
+        const total = parts[1] ? parts[1].trim() : '';
+        const paddedNum = /^\d+$/.test(num) ? num.padStart(3, '0') : num;
+        return total ? `${paddedNum}/${total}` : paddedNum;
+      }
+
+      if (/^\d+$/.test(str)) return str.padStart(3, '0');
+      return str;
     }
 
-    // Render Cards Gallery
-    function renderGallery() {
-      const query = searchInput.value.toLowerCase();
-      const selectedType = typeFilter.value;
-      const selectedSort = sortBy.value;
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      const uploadBtn = document.getElementById('uploadBtn');
+      const rulesAdminBar = document.getElementById('rulesAdminBar');
+      const loreAdminBar = document.getElementById('loreAdminBar');
+      const adminBtn = document.getElementById('adminBtn');
 
-      // 1. Filter Cards
-      let filtered = allCards.filter(card => {
-        const matchesSearch = card.name.toLowerCase().includes(query) || card.ability.toLowerCase().includes(query);
-        const matchesType = selectedType === "All" || card.type === selectedType;
-        return matchesSearch && matchesType;
+      if (user && !user.isAnonymous) {
+        uploadBtn.style.display = 'inline-flex';
+        rulesAdminBar.style.display = 'flex';
+        loreAdminBar.style.display = 'flex';
+        adminBtn.textContent = '🔓 Logout Admin';
+        adminBtn.classList.add('btn-danger');
+      } else {
+        uploadBtn.style.display = 'none';
+        rulesAdminBar.style.display = 'none';
+        loreAdminBar.style.display = 'none';
+        adminBtn.textContent = '🔒 Admin Login';
+        adminBtn.classList.remove('btn-danger');
+      }
+    });
+
+    function listenToRealtimeData() {
+      const cardsRef = ref(db, 'portal/cards');
+      onValue(cardsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data && Array.isArray(data)) {
+          cardDatabase = data.sort(compareCards);
+          populateFilterDropdowns(cardDatabase);
+          renderCards(cardDatabase);
+        } else {
+          document.getElementById('cardGallery').innerHTML = '<div class="empty-state">No card database found in Realtime Database. Admin can upload Excel file.</div>';
+        }
+      }, (error) => {
+        console.error("Database read error: ", error);
+        document.getElementById('cardGallery').innerHTML = `<div class="empty-state">Database Connection Error: ${error.message}</div>`;
       });
 
-      // 2. Sort Cards
-      filtered.sort((a, b) => {
-        switch (selectedSort) {
-          case "collection_asc": {
-            const colA = parseCollectionNum(a.collectionNumber);
-            const colB = parseCollectionNum(b.collectionNumber);
-            if (colA.total !== colB.total) return colA.total - colB.total; // Set 1 (/72) before Set 2 (/108)
-            return colA.num - colB.num;
+      const settingsRef = ref(db, 'portal/settings');
+      onValue(settingsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          if (data.rulesUrl) {
+            document.getElementById('rulesFrame').src = data.rulesUrl;
+            document.getElementById('rulesUrlInput').value = data.rulesUrl;
           }
-          case "collection_desc": {
-            const colA = parseCollectionNum(a.collectionNumber);
-            const colB = parseCollectionNum(b.collectionNumber);
-            if (colA.total !== colB.total) return colA.total - colB.total; // Set 1 (/72) before Set 2 (/108)
-            return colB.num - colA.num;
+          if (data.loreUrl) {
+            document.getElementById('loreFrame').src = data.loreUrl;
+            document.getElementById('loreUrlInput').value = data.loreUrl;
           }
-          case "name_asc":
-            return a.name.localeCompare(b.name);
-          case "name_desc":
-            return b.name.localeCompare(a.name);
-          case "cost_asc":
-            return a.cost - b.cost;
-          case "cost_desc":
-            return b.cost - a.cost;
-          case "power_desc":
-            return b.power - a.power;
-          case "hp_desc":
-            return b.hp - a.hp;
-          default:
-            return 0;
         }
       });
+    }
 
-      // 3. Render Output
-      if (filtered.length === 0) {
-        galleryGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No cards found.</p>`;
+    window.switchTab = function(tabId, btnElement) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btnElement.classList.add('active');
+      localStorage.setItem('activeTab', tabId);
+    };
+
+    function formatAbilityText(text) {
+      if (!text) return "<em>No ability text</em>";
+      let str = String(text).replace(/\\/g, ' ');
+
+      if (/Buff\s*\/\s*Bane:/i.test(str)) {
+        str = str.replace(
+          /Buff\s*\/\s*Bane:/i,
+          '<span class="buff-tag">Buff</span> / <span class="bane-tag">Bane:</span>'
+        );
+      } else {
+        str = str
+          .replace(/Buff:/i, '<span class="buff-tag">Buff:</span>')
+          .replace(/Bane:/i, '<br><span class="bane-tag">Bane:</span>');
+      }
+      return str;
+    }
+
+    function renderCards(cards) {
+      const gallery = document.getElementById('cardGallery');
+      gallery.innerHTML = '';
+
+      if (cards.length === 0) {
+        gallery.innerHTML = '<div class="empty-state">No matching cards found.</div>';
         return;
       }
 
-      galleryGrid.innerHTML = filtered.map(card => {
-        const isDomain = card.type === "Domain";
-        const typeColor = getTypeColor(card.type);
+      cards.forEach(card => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card';
 
-        const badgeStyle = `background: ${typeColor}22; color: ${typeColor}; border: 1px solid ${typeColor}66;`;
-        const cardStyle = isDomain ? `border-left: 4px solid ${typeColor};` : '';
+        let badgesHtml = '';
+        if (card.TAG && String(card.TAG).trim() !== '' && String(card.TAG).toLowerCase() !== 'nan') {
+          badgesHtml += `<span class="sub-badge trigger-badge">⚡ ${card.TAG}</span>`;
+        } else if (card.Type === 'Domain') {
+          badgesHtml += `<span class="sub-badge trigger-badge">🌌 Domain Card (Buff / Bane)</span>`;
+        }
 
-        return `
-          <div class="card" style="${cardStyle}">
-            <div>
-              <div class="card-header-type">
-                <span class="card-type" style="${badgeStyle}">${card.type}</span>
-                ${card.collectionNumber ? `<span class="card-number">#${card.collectionNumber}</span>` : ''}
-              </div>
-              <h3>${card.name}</h3>
+        if (card.Attribute1 && String(card.Attribute1).toLowerCase() !== 'nan') {
+          badgesHtml += `<span class="sub-badge attr-badge">${card.Attribute1}</span>`;
+        }
+        if (card.Attribute2 && String(card.Attribute2).toLowerCase() !== 'nan') {
+          badgesHtml += `<span class="sub-badge attr-badge">${card.Attribute2}</span>`;
+        }
 
-              ${isDomain ? `
-                <div class="domain-tag-bar">🌌 Domain Card (Buff / Bane)</div>
-              ` : `
-                <div class="card-stats">
-                  <span class="stat-pill">Cost: ${card.cost}</span>
-                  <span class="stat-pill">HP: ${card.hp}</span>
-                  <span class="stat-pill">Power: ${card.power}</span>
-                </div>
-              `}
-
-              <div class="card-ability">${formatAbilityText(card.ability)}</div>
+        let statsHtml = '';
+        if (card.Type !== 'Domain' && (card.Cost !== undefined || card.HP !== undefined || card.Power !== undefined)) {
+          statsHtml = `
+            <div class="stats-row">
+              ${card.Cost !== undefined ? `<div class="stat-item"><span class="stat-label">Cost:</span> ${card.Cost}</div>` : ''}
+              ${card.HP !== undefined ? `<div class="stat-item"><span class="stat-label">HP:</span> ${card.HP}</div>` : ''}
+              ${card.Power !== undefined ? `<div class="stat-item"><span class="stat-label">Power:</span> ${card.Power}</div>` : ''}
             </div>
+          `;
+        }
+
+        const formattedNum = formatCollectionNum(card.Collection_Number);
+
+        cardEl.innerHTML = `
+          <div class="card-header">
+            <span class="type-badge">${card.Type || 'CARD'}</span>
+            <span class="collection-num">#${formattedNum}</span>
           </div>
+          <div class="card-title">${card.Name || 'Untitled'}</div>
+          ${badgesHtml ? `<div class="badges-row">${badgesHtml}</div>` : ''}
+          ${statsHtml}
+          <div class="card-ability">${formatAbilityText(card.Ability)}</div>
         `;
-      }).join("");
+
+        gallery.appendChild(cardEl);
+      });
     }
 
-    searchInput.addEventListener("input", renderGallery);
-    typeFilter.addEventListener("change", renderGallery);
-    sortBy.addEventListener("change", renderGallery);
+    function populateFilterDropdowns(cards) {
+      const setFilter = document.getElementById('setFilter');
+      const typeFilter = document.getElementById('typeFilter');
+      const tagFilter = document.getElementById('tagFilter');
+
+      const sets = new Set();
+      const types = new Set();
+      const tags = new Set();
+
+      cards.forEach(c => {
+        const keys = getCardSortKeys(c);
+        if (keys.setTotal !== 99999) sets.add(`/${keys.setTotal}`);
+        if (c.Type) types.add(c.Type);
+        if (c.TAG && String(c.TAG).toLowerCase() !== 'nan') tags.add(c.TAG);
+      });
+
+      setFilter.innerHTML = '<option value="ALL">All Sets</option>';
+      Array.from(sets).sort().forEach(s => setFilter.innerHTML += `<option value="${s}">Set (${s})</option>`);
+
+      typeFilter.innerHTML = '<option value="ALL">All Types</option>';
+      types.forEach(t => typeFilter.innerHTML += `<option value="${t}">${t}</option>`);
+
+      tagFilter.innerHTML = '<option value="ALL">All Triggers / Tags</option>';
+      tags.forEach(tg => tagFilter.innerHTML += `<option value="${tg}">${tg}</option>`);
+    }
+
+    function filterCards() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const selectedSet = document.getElementById('setFilter').value;
+      const selectedType = document.getElementById('typeFilter').value;
+      const selectedTag = document.getElementById('tagFilter').value;
+
+      const filtered = cardDatabase.filter(card => {
+        const matchQuery = (card.Name && card.Name.toLowerCase().includes(query)) ||
+                           (card.Ability && card.Ability.toLowerCase().includes(query));
+        const matchSet = selectedSet === 'ALL' || String(card.Collection_Number).includes(selectedSet);
+        const matchType = selectedType === 'ALL' || card.Type === selectedType;
+        const matchTag = selectedTag === 'ALL' || card.TAG === selectedTag;
+
+        return matchQuery && matchSet && matchType && matchTag;
+      });
+
+      filtered.sort(compareCards);
+      renderCards(filtered);
+    }
+
+    window.closeAdminModal = function() {
+      document.getElementById('loginModal').style.display = 'none';
+    };
+
+    window.toggleAdminModal = function() {
+      if (currentUser && !currentUser.isAnonymous) {
+        signOut(auth).then(() => alert('Admin logged out.'));
+      } else {
+        const modal = document.getElementById('loginModal');
+        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+      }
+    };
+
+    window.checkAdminCredentials = function() {
+      const email = document.getElementById('adminEmail').value.trim();
+      const pwd = document.getElementById('adminPassword').value;
+
+      signInWithEmailAndPassword(auth, email, pwd)
+        .then(() => {
+          alert('Admin authenticated successfully!');
+          document.getElementById('adminEmail').value = '';
+          document.getElementById('adminPassword').value = '';
+          window.closeAdminModal();
+        })
+        .catch(err => alert('Authentication Failed: ' + err.message));
+    };
+
+    window.updateDocUrl = function(type) {
+      if (!currentUser || currentUser.isAnonymous) return;
+      const field = type === 'rules' ? 'rulesUrl' : 'loreUrl';
+      const inputId = type === 'rules' ? 'rulesUrlInput' : 'loreUrlInput';
+      const url = document.getElementById(inputId).value;
+
+      if (url) {
+        set(ref(db, `portal/settings/${field}`), url)
+          .then(() => alert(`${type.toUpperCase()} document link saved globally!`))
+          .catch(err => alert('Error saving link: ' + err.message));
+      }
+    };
+
+    function processExcelData(data) {
+      if (!currentUser || currentUser.isAnonymous) {
+        alert('Unauthorized write attempt.');
+        return;
+      }
+      const workbook = XLSX.read(data, { type: 'binary', raw: false, cellText: true });
+      const sheetName = workbook.SheetNames[0];
+      const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { raw: false, defval: "" });
+
+      set(ref(db, 'portal/cards'), json)
+        .then(() => alert('Cards uploaded & published live to Realtime DB!'))
+        .catch(err => alert('Error uploading cards: ' + err.message));
+    }
+
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => processExcelData(evt.target.result);
+      reader.readAsBinaryString(file);
+    });
+
+    document.getElementById('searchInput').addEventListener('input', filterCards);
+    document.getElementById('setFilter').addEventListener('change', filterCards);
+    document.getElementById('typeFilter').addEventListener('change', filterCards);
+    document.getElementById('tagFilter').addEventListener('change', filterCards);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTab = localStorage.getItem('activeTab');
+      if (savedTab) {
+        const btnMap = { 'cardsTab': 0, 'rulesTab': 1, 'loreTab': 2 };
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        if (tabBtns[btnMap[savedTab]]) {
+          switchTab(savedTab, tabBtns[btnMap[savedTab]]);
+        }
+      }
+    });
+
+    listenToRealtimeData();
   </script>
 </body>
 </html>
