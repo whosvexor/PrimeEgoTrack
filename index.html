@@ -124,7 +124,7 @@
     }
     .modal {
       background: var(--card-bg); border: 1px solid var(--card-border); padding: 24px; border-radius: 12px;
-      width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 16px;
+      width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 16px;
     }
     .modal h2 { font-size: 1.3rem; color: var(--text-main); }
 
@@ -132,11 +132,14 @@
     .type-color-row {
       display: flex; align-items: center; justify-content: space-between;
       background: var(--stats-bg); padding: 10px 14px; border-radius: 8px;
-      border: 1px solid var(--card-border); gap: 12px;
+      border: 1px solid var(--card-border); gap: 12px; flex-wrap: wrap;
     }
-    .color-pickers { display: flex; gap: 12px; align-items: center; }
-    .color-picker-group { display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; color: var(--text-sub); gap: 2px; }
+    .color-pickers { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .color-picker-group { display: flex; flex-direction: column; gap: 4px; }
+    .color-picker-group label { font-size: 0.75rem; color: var(--text-sub); font-weight: 600; }
+    .color-input-wrapper { display: flex; align-items: center; gap: 6px; }
     input[type="color"] { border: none; width: 34px; height: 34px; border-radius: 6px; cursor: pointer; background: none; }
+    input.hex-input { width: 85px; padding: 6px 8px; font-size: 0.85rem; font-family: monospace; text-transform: uppercase; text-align: center; }
   </style>
 </head>
 <body>
@@ -214,8 +217,8 @@
   <!-- Type Colors Customization Modal -->
   <div class="modal-overlay" id="typeColorsModal">
     <div class="modal">
-      <h2>Customize Type Colors</h2>
-      <div id="typeColorsList" style="display: flex; flex-direction: column; gap: 10px; max-height: 380px; overflow-y: auto; padding-right: 4px;">
+      <h2>Customize Type Colors (Hex / Picker)</h2>
+      <div id="typeColorsList" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 4px;">
         <!-- Dynamic color pickers populate here -->
       </div>
       <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
@@ -394,7 +397,7 @@
         if (data) {
           if (data.typeColors) {
             typeColorsMap = data.typeColors;
-            filterCards(); // Re-render with new colors
+            filterCards();
           }
           if (data.rulesUrl) {
             document.getElementById('rulesUrlInput').value = data.rulesUrl;
@@ -473,7 +476,7 @@
 
         const formattedNum = formatCollectionNum(card.Collection_Number);
 
-        // Apply custom Type colors if configured by admin
+        // Apply custom Type colors if configured by admin (Default: bg '#2e185b', text '#c084fc')
         const cardType = card.Type || 'CARD';
         const typeColor = typeColorsMap[cardType];
         const typeBadgeStyle = typeColor ? `style="background-color: ${typeColor.bg}; color: ${typeColor.text};"` : '';
@@ -568,6 +571,18 @@
         .catch(err => alert('Authentication Failed: ' + err.message));
     };
 
+    // Helper functions for Hex code parsing
+    function normalizeHex(val) {
+      if (!val) return '';
+      val = val.trim();
+      if (!val.startsWith('#')) val = '#' + val;
+      return val;
+    }
+
+    function isValidHex(val) {
+      return /^#([0-9A-F]{3}){1,2}$/i.test(val);
+    }
+
     // Type Colors Manager Functions
     window.openTypeColorsModal = function() {
       const modal = document.getElementById('typeColorsModal');
@@ -577,7 +592,7 @@
       const types = Array.from(new Set(cardDatabase.map(c => c.Type).filter(Boolean))).sort();
 
       if (types.length === 0) {
-        container.innerHTML = '<div style="color: var(--text-sub); text-align: center; padding: 20px;">No card types found in database. Please upload card data first.</div>';
+        container.innerHTML = '<div style="color: var(--text-sub); text-align: center; padding: 20px;">No card types found in database. Upload card data first.</div>';
         modal.style.display = 'flex';
         return;
       }
@@ -596,26 +611,54 @@
           <div class="color-pickers">
             <div class="color-picker-group">
               <label>Background</label>
-              <input type="color" class="bg-picker" value="${config.bg}" />
+              <div class="color-input-wrapper">
+                <input type="color" class="bg-picker" value="${config.bg}" />
+                <input type="text" class="hex-input bg-hex" value="${config.bg}" maxlength="7" placeholder="#FFDD00" />
+              </div>
             </div>
             <div class="color-picker-group">
-              <label>Text</label>
-              <input type="color" class="text-picker" value="${config.text}" />
+              <label>Text Color</label>
+              <div class="color-input-wrapper">
+                <input type="color" class="text-picker" value="${config.text}" />
+                <input type="text" class="hex-input text-hex" value="${config.text}" maxlength="7" placeholder="#FFFFFF" />
+              </div>
             </div>
           </div>
         `;
 
         const badge = row.querySelector('.preview-badge');
-        const bgInput = row.querySelector('.bg-picker');
-        const textInput = row.querySelector('.text-picker');
+        const bgPicker = row.querySelector('.bg-picker');
+        const bgHex = row.querySelector('.bg-hex');
+        const textPicker = row.querySelector('.text-picker');
+        const textHex = row.querySelector('.text-hex');
 
-        const updatePreview = () => {
-          badge.style.backgroundColor = bgInput.value;
-          badge.style.color = textInput.value;
-        };
+        // Background Color Sync Logic
+        bgPicker.addEventListener('input', () => {
+          bgHex.value = bgPicker.value.toUpperCase();
+          badge.style.backgroundColor = bgPicker.value;
+        });
 
-        bgInput.addEventListener('input', updatePreview);
-        textInput.addEventListener('input', updatePreview);
+        bgHex.addEventListener('input', () => {
+          const hex = normalizeHex(bgHex.value);
+          if (isValidHex(hex)) {
+            bgPicker.value = hex;
+            badge.style.backgroundColor = hex;
+          }
+        });
+
+        // Text Color Sync Logic
+        textPicker.addEventListener('input', () => {
+          textHex.value = textPicker.value.toUpperCase();
+          badge.style.color = textPicker.value;
+        });
+
+        textHex.addEventListener('input', () => {
+          const hex = normalizeHex(textHex.value);
+          if (isValidHex(hex)) {
+            textPicker.value = hex;
+            badge.style.color = hex;
+          }
+        });
 
         container.appendChild(row);
       });
@@ -635,8 +678,13 @@
 
       rows.forEach(row => {
         const type = row.dataset.type;
-        const bg = row.querySelector('.bg-picker').value;
-        const text = row.querySelector('.text-picker').value;
+        let bg = normalizeHex(row.querySelector('.bg-hex').value);
+        let text = normalizeHex(row.querySelector('.text-hex').value);
+
+        // Fallbacks if input is invalid hex
+        if (!isValidHex(bg)) bg = row.querySelector('.bg-picker').value;
+        if (!isValidHex(text)) text = row.querySelector('.text-picker').value;
+
         if (type) {
           updatedColors[type] = { bg, text };
         }
